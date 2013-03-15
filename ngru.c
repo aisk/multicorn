@@ -25,6 +25,15 @@ void ngruPyvmDestoy()
 
 }
 
+PyObject* PyDict_SetStringItemString(PyObject *pDict, char *key, char *value)
+{
+    PyObject *pValue;
+    pValue = PyString_FromString(value);
+    PyDict_SetItemString(pDict, key, pValue);
+    Py_DecRef(pValue);
+    return pDict;
+}
+
 PyObject* ngruWsgiFuncGet()
 {
     // get wsgi app module
@@ -60,14 +69,33 @@ void ngruWsgiHandler(struct evhttp_request *req, void *arg)
 {
     // build the python `start_response` function
     PyObject* (*fpFunc)(PyObject*, PyObject*) = ngruStartResponse;
-    PyMethodDef methd = {"methd", fpFunc, METH_VARARGS, "a new function"};
+    PyMethodDef methd = {"start_response", fpFunc, METH_VARARGS, "a new function"};
     PyObject *name = PyString_FromString(methd.ml_name);
     PyObject* pStartResponse = PyCFunction_NewEx(&methd, NULL, name);
     Py_DECREF(name);
 
+
+    char* uri;
+    uri  = evhttp_request_get_uri(req);
+
+    char* method;
+    switch (evhttp_request_get_command(req)) {
+        case (EVHTTP_REQ_GET):
+            method = "GET";
+            break;
+        case (EVHTTP_REQ_POST):
+            method = "POST";
+            break;
+        // TODO
+    }
+
+    printf("%s: %s\n", method, uri);
+
     // build the python environ dict
     PyObject *environ;
     environ = PyDict_New();
+
+    PyDict_SetStringItemString(environ, "REQUEST_METHOD", method);
 
     // call python wsgi application function
     PyObject *pWsgiFunc;
@@ -81,8 +109,7 @@ void ngruWsgiHandler(struct evhttp_request *req, void *arg)
     pResult = PyObject_CallObject(pWsgiFunc, pArgs);
     assert(pResult!=NULL);
     char *strResult = ngruParseWsgiResult(pResult);
-    puts(strResult);
-
+    
     struct evbuffer *buf;
     buf = evbuffer_new();
     assert(buf != NULL);
@@ -93,7 +120,6 @@ void ngruWsgiHandler(struct evhttp_request *req, void *arg)
 
     evbuffer_free(buf);
 
-    //free(strResult);  # WTF: Why?
     Py_DECREF(pStartResponse);
     Py_DECREF(pArgs);
     Py_DECREF(pResult);
@@ -128,9 +154,11 @@ int main(int argc, char* argv[])
     http = evhttp_new(base);
     assert(evhttp_bind_socket(http, "0.0.0.0", 8000) == 0);
 
-    evhttp_set_cb(http, "/", ngruWsgiHandler, NULL);
+    evhttp_set_gencb(http, ngruWsgiHandler, NULL);
 
-    assert(event_base_dispatch(base) == 1);
+    puts("Server started at 0.0.0.0:8000");
+    //assert(event_base_dispatch(base) == 1);
+    event_base_dispatch(base);
 
     evhttp_free(http);
     event_base_free(base);
