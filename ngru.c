@@ -25,10 +25,19 @@ void ngruPyvmDestoy()
 
 }
 
-PyObject* PyDict_SetStringItemString(PyObject *pDict, char *key, char *value)
+PyObject* PyDict_SetStringItemString(PyObject *pDict, const char *key, const char *value)
 {
     PyObject *pValue;
     pValue = PyString_FromString(value);
+    PyDict_SetItemString(pDict, key, pValue);
+    Py_DecRef(pValue);
+    return pDict;
+}
+
+PyObject* PyDict_SetIntItemString(PyObject *pDict, const char *key, int value)
+{
+    PyObject *pValue;
+    pValue = PyInt_FromLong(value);
     PyDict_SetItemString(pDict, key, pValue);
     Py_DecRef(pValue);
     return pDict;
@@ -74,11 +83,29 @@ void ngruWsgiHandler(struct evhttp_request *req, void *arg)
     PyObject* pStartResponse = PyCFunction_NewEx(&methd, NULL, name);
     Py_DECREF(name);
 
+    const struct evhttp_uri* ev_uri;
+    ev_uri = evhttp_request_get_evhttp_uri(req);
+    assert(ev_uri!=NULL);
 
-    char* uri;
+    const char *query;
+    query = evhttp_uri_get_query(ev_uri);
+    if (query==NULL) query = "";
+
+    const char *path;
+    path = evhttp_uri_get_path(ev_uri);
+
+    const char *uri;
     uri  = evhttp_request_get_uri(req);
 
-    char* method;
+    const char *host;
+    host = evhttp_request_get_host(req);
+
+    puts(evhttp_uri_get_scheme(ev_uri));
+
+    int port;
+    port = evhttp_uri_get_port(ev_uri);
+
+    char *method;
     switch (evhttp_request_get_command(req)) {
         case (EVHTTP_REQ_GET):
             method = "GET";
@@ -87,6 +114,8 @@ void ngruWsgiHandler(struct evhttp_request *req, void *arg)
             method = "POST";
             break;
         // TODO
+        default:
+            break;
     }
 
     printf("%s: %s\n", method, uri);
@@ -96,6 +125,15 @@ void ngruWsgiHandler(struct evhttp_request *req, void *arg)
     environ = PyDict_New();
 
     PyDict_SetStringItemString(environ, "REQUEST_METHOD", method);
+    PyDict_SetStringItemString(environ, "SCRIPT_NAME", "");
+    PyDict_SetStringItemString(environ, "SERVER_NAME", host);
+    PyDict_SetStringItemString(environ, "QUERY_STRING", query);
+    PyDict_SetIntItemString(environ, "SERVER_PORT", port);
+
+    //free(uri);
+    //free(method);
+    //free(host);
+    
 
     // call python wsgi application function
     PyObject *pWsgiFunc;
