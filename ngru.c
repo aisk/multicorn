@@ -166,6 +166,12 @@ PyObject *ngruParseEnviron(struct evhttp_request *req)
     PyDict_SetIntItemString(environ, "SERVER_PORT", PORT);              // TODO
     PyDict_SetStringItemString(environ, "SERVER_PROTOCOL", "HTTP/1.1"); // TODO
 
+    PyDict_SetStringItemString(environ, "wsgi.url_scheme", "http");
+    PyDict_SetItemString(environ, "wsgi.multithread", Py_False);
+    PyDict_SetItemString(environ, "wsgi.multiprocess", Py_False);
+    PyDict_SetItemString(environ, "wsgi.run_once", Py_False);
+    
+
     struct evkeyvalq *headers;
     headers = evhttp_request_get_input_headers(req);
     struct evkeyval *header;
