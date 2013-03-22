@@ -1,11 +1,32 @@
-#include <assert.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include <err.h>
+#include <assert.h>
+#include <sys/queue.h>
 
 #include <event2/event.h>
 #include <event2/buffer.h>
 #include <event2/http.h>
+#include <event2/keyvalq_struct.h>
 #include <python2.7/Python.h>
 
+#define ADDRESS "0.0.0.0"
+#define PORT 8000
+
+
+struct event_base *base;
+
+char *strupr(char *str) 
+{ 
+    char *ptr = str; 
+    while (*ptr != '\0') { 
+        if (islower(*ptr)) 
+            *ptr = toupper(*ptr); 
+        ptr++; 
+    } 
+    return str; 
+}
 
 void ngruPyvmInit()
 {
@@ -74,15 +95,8 @@ char *ngruParseWsgiResult(PyObject *pResult)
     return strResult;
 }
 
-void ngruWsgiHandler(struct evhttp_request *req, void *arg)
+PyObject *ngruParseEnviron(struct evhttp_request *req)
 {
-    // build the python `start_response` function
-    PyObject* (*fpFunc)(PyObject*, PyObject*) = ngruStartResponse;
-    PyMethodDef methd = {"start_response", fpFunc, METH_VARARGS, "a new function"};
-    PyObject *name = PyString_FromString(methd.ml_name);
-    PyObject* pStartResponse = PyCFunction_NewEx(&methd, NULL, name);
-    Py_DECREF(name);
-
     const struct evhttp_uri* ev_uri;
     ev_uri = evhttp_request_get_evhttp_uri(req);
     assert(ev_uri!=NULL);
@@ -100,10 +114,8 @@ void ngruWsgiHandler(struct evhttp_request *req, void *arg)
     const char *host;
     host = evhttp_request_get_host(req);
 
-    puts(evhttp_uri_get_scheme(ev_uri));
-
-    int port;
-    port = evhttp_uri_get_port(ev_uri);
+    //int port;
+    //port = evhttp_uri_get_port(ev_uri);
 
     char *method;
     switch (evhttp_request_get_command(req)) {
@@ -113,7 +125,27 @@ void ngruWsgiHandler(struct evhttp_request *req, void *arg)
         case (EVHTTP_REQ_POST):
             method = "POST";
             break;
-        // TODO
+        case (EVHTTP_REQ_HEAD):
+            method = "HEAD";
+            break;
+	    case (EVHTTP_REQ_PUT):
+            method = "PUT";
+            break;
+        case (EVHTTP_REQ_DELETE):
+            method = "DELETE";
+            break;
+        case (EVHTTP_REQ_OPTIONS):
+            method = "OPTIONS";
+            break;
+        case (EVHTTP_REQ_TRACE):
+            method = "TRACE";
+            break;
+        case (EVHTTP_REQ_CONNECT):
+            method = "CONNECT";
+            break;
+        case (EVHTTP_REQ_PATCH):
+            method = "PATCH";
+            break;
         default:
             break;
     }
@@ -125,15 +157,41 @@ void ngruWsgiHandler(struct evhttp_request *req, void *arg)
     environ = PyDict_New();
 
     PyDict_SetStringItemString(environ, "REQUEST_METHOD", method);
-    PyDict_SetStringItemString(environ, "SCRIPT_NAME", "");
-    PyDict_SetStringItemString(environ, "SERVER_NAME", host);
+    PyDict_SetStringItemString(environ, "SCRIPT_NAME", "");             // TODO
+    PyDict_SetStringItemString(environ, "PATH_INFO", path);
     PyDict_SetStringItemString(environ, "QUERY_STRING", query);
-    PyDict_SetIntItemString(environ, "SERVER_PORT", port);
+    PyDict_SetStringItemString(environ, "CONTENT_TYPE", "");            // TODO
+    PyDict_SetStringItemString(environ, "CONTENT_LENGTH", "");          // TODO
+    PyDict_SetStringItemString(environ, "SERVER_NAME", host);
+    PyDict_SetIntItemString(environ, "SERVER_PORT", PORT);              // TODO
+    PyDict_SetStringItemString(environ, "SERVER_PROTOCOL", "HTTP/1.1"); // TODO
 
-    //free(uri);
-    //free(method);
-    //free(host);
-    
+    struct evkeyvalq *headers;
+    headers = evhttp_request_get_input_headers(req);
+    struct evkeyval *header;
+    TAILQ_FOREACH(header, headers, next) {
+        PyObject *key = PyString_FromFormat("HTTP_%s", header->key);
+        PyObject *value = PyString_FromString(header->value);
+        PyDict_SetItem(environ, key, value);
+        Py_DECREF(key);
+        Py_DECREF(value);
+    }
+
+
+    return environ;
+}
+
+void ngruWsgiHandler(struct evhttp_request *req, void *arg)
+{
+    // build the python `start_response` function
+    PyObject* (*fpFunc)(PyObject*, PyObject*) = ngruStartResponse;
+    PyMethodDef methd = {"start_response", fpFunc, METH_VARARGS, "a new function"};
+    PyObject *name = PyString_FromString(methd.ml_name);
+    PyObject* pStartResponse = PyCFunction_NewEx(&methd, NULL, name);
+    Py_DECREF(name);
+
+    PyObject *environ;
+    environ = ngruParseEnviron(req);
 
     // call python wsgi application function
     PyObject *pWsgiFunc;
@@ -180,21 +238,29 @@ void ngruCommonHandler(struct evhttp_request *req, void *arg)
     evbuffer_free(buf);
 }
 
+void signalHandler(int signal)
+{
+    event_base_loopbreak(base);
+}
+
 int main(int argc, char* argv[])
 {
     ngruPyvmInit();
 
-    struct event_base *base;
     base = event_base_new();
     assert(base != NULL);
 
+    // for ctrl-c
+    signal(SIGINT, signalHandler);
+    signal(SIGTERM, signalHandler);
+
     struct evhttp *http;
     http = evhttp_new(base);
-    assert(evhttp_bind_socket(http, "0.0.0.0", 8000) == 0);
+    assert(evhttp_bind_socket(http, ADDRESS, PORT) == 0);
 
     evhttp_set_gencb(http, ngruWsgiHandler, NULL);
 
-    puts("Server started at 0.0.0.0:8000");
+    printf("Server started at %s:%d\n", ADDRESS, PORT);
     //assert(event_base_dispatch(base) == 1);
     event_base_dispatch(base);
 
