@@ -87,12 +87,24 @@ PyObject *ngruStartResponse(PyObject* status, PyObject* headers)
     return PyString_FromString("sad");
 }
 
-char *ngruParseWsgiResult(PyObject *pResult)
+struct evbuffer *ngruParseWsgiResult(PyObject *pResult)
 {
-    assert(PyList_Check(pResult));
-    PyObject *pResultString = PyList_GetItem(pResult, 0);
-    char *strResult = PyString_AsString(pResultString);
-    return strResult;
+    //assert(PyIter_Check(pResult));
+
+    struct evbuffer *buf;
+    buf = evbuffer_new();
+    assert(buf != NULL);
+
+    PyObject *item;
+    PyObject *iterator;
+    iterator = PySeqIter_New(pResult);
+    while ((item=PyIter_Next(iterator)) != NULL) {
+        //PyObject *pResultString = PyList_GetItem(pResult, 0);
+        char *strResult = PyString_AsString(item);
+        evbuffer_add_printf(buf, strResult);
+        Py_DECREF(item);
+    }
+    return buf;
 }
 
 PyObject *ngruParseEnviron(struct evhttp_request *req)
@@ -210,13 +222,13 @@ void ngruWsgiHandler(struct evhttp_request *req, void *arg)
     PyObject *pResult;
     pResult = PyObject_CallObject(pWsgiFunc, pArgs);
     assert(pResult!=NULL);
-    char *strResult = ngruParseWsgiResult(pResult);
     
-    struct evbuffer *buf;
-    buf = evbuffer_new();
-    assert(buf != NULL);
+    struct evkeyvalq *output_headers;
+    output_headers = evhttp_request_get_output_headers(req);
+    evhttp_add_header(output_headers, "Server", "Ngru");
 
-    evbuffer_add_printf(buf, strResult);
+    struct evbuffer *buf;
+    buf = ngruParseWsgiResult(pResult);
 
     evhttp_send_reply(req, HTTP_OK, "OK", buf);
 
