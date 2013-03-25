@@ -8,7 +8,10 @@ def app(environ, start_response):
         subject = cgi.escape(parameters['subject'][0])
     else:
         subject = 'World'
-    start_response('200 OK', [('Content-Type', 'text/plain')])
+    start_response('200 OK', [
+        ('Content-Type', 'text/plain'),
+        ('aaa', 'xxxxxx'),
+    ])
     rets = [
         '<html><head></head><body>',
         '<h1>Hello %s!</h1>' %subject,
