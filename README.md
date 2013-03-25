@@ -1,6 +1,6 @@
-# ngru
+# Ngru
 
-Ngru is a python wsgi server writen in C. Use libevent's http library.
+Ngru is a python wsgi server writen in C. Using libevent's http library.
 
 ## build
 
