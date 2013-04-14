@@ -13,7 +13,7 @@
 
 #define ADDRESS "0.0.0.0"
 #define PORT 8000
-#define WSGI_MODULE "app_bottle"
+#define WSGI_MODULE "app"
 #define WSGI_FUNC "app"
 
 struct event_base *base;
@@ -134,6 +134,10 @@ PyObject *ngruParseEnviron(struct evhttp_request *req)
     //int port;
     //port = evhttp_uri_get_port(ev_uri);
 
+    const char *scheme;
+    scheme = evhttp_uri_get_scheme(ev_uri);
+    if (scheme==NULL) scheme = "http";
+
     char *method;
     switch (evhttp_request_get_command(req)) {
         case (EVHTTP_REQ_GET):
@@ -182,10 +186,10 @@ PyObject *ngruParseEnviron(struct evhttp_request *req)
     PyDict_SetStringItemString(environ, "SERVER_NAME", host);
     char port[10];
     sprintf(port, "%d", PORT);
-    PyDict_SetStringItemString(environ, "SERVER_PORT", port);              // TODO
+    PyDict_SetStringItemString(environ, "SERVER_PORT", port);
     PyDict_SetStringItemString(environ, "SERVER_PROTOCOL", "HTTP/1.1"); // TODO
 
-    PyDict_SetStringItemString(environ, "wsgi.url_scheme", "http");
+    PyDict_SetStringItemString(environ, "wsgi.url_scheme", scheme);
     PyDict_SetItemString(environ, "wsgi.multithread", Py_False);
     PyDict_SetItemString(environ, "wsgi.multiprocess", Py_False);
     PyDict_SetItemString(environ, "wsgi.run_once", Py_False);
