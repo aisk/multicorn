@@ -9,7 +9,7 @@ def app(environ, start_response):
     else:
         subject = 'World'
     start_response('200 OK', [
-        ('Content-Type', 'text/plain'),
+        ('Content-Type', 'text/html'),
         ('aaa', 'xxxxxx'),
     ])
     rets = [

@@ -88,8 +88,8 @@ PyObject *ngruStartResponse(PyObject* self, PyObject* args)
 {
     pyResponseStatus = PyTuple_GetItem(args, 0);
     pyResponseHeaders = PyTuple_GetItem(args, 1);
-    puts(PyString_AsString(PyObject_Str(pyResponseHeaders)));
-
+    Py_INCREF(pyResponseHeaders);
+    Py_INCREF(pyResponseStatus);
     return PyString_FromString("sad");
 }
 
@@ -231,19 +231,16 @@ void ngruWsgiHandler(struct evhttp_request *req, void *arg)
     
     struct evkeyvalq *output_headers;
     output_headers = evhttp_request_get_output_headers(req);
-    evhttp_add_header(output_headers, "Server", "Ngru");
+    evhttp_add_header(output_headers, "Wsgi-Server", "Ngru");
     Py_ssize_t i;
     PyObject *header;
-    puts(PyString_AsString(PyObject_Str(pyResponseHeaders)));
     for (i=0; i<PyList_Size(pyResponseHeaders);i++) {
         header = PyList_GetItem(pyResponseHeaders, i);
-        //puts(PyString_AsString(PyObject_Str(header)));
         //PyTuple_GetItem(header, 0);
-        //char* key = PyString_AsString(PyTuple_GetItem(header, 0));
-        //char* value = PyString_AsString(PyTuple_GetItem(header, 1));
-        //evhttp_add_header(output_headers, key, value);
-        //printf("%s: %s\n", key, value);
-        //puts(key);
+        char* key = PyString_AsString(PyTuple_GetItem(header, 0));
+        char* value = PyString_AsString(PyTuple_GetItem(header, 1));
+        evhttp_add_header(output_headers, key, value);
+        printf("%s: %s\n", key, value);
     }
 
 
@@ -254,6 +251,8 @@ void ngruWsgiHandler(struct evhttp_request *req, void *arg)
 
     evbuffer_free(buf);
 
+    Py_DECREF(pyResponseStatus);
+    Py_DECREF(pyResponseHeaders);
     Py_DECREF(pStartResponse);
     Py_DECREF(pArgs);
     Py_DECREF(pResult);

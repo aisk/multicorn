@@ -2,7 +2,7 @@ CC=clang
 CFLAGS=-Wall
 LIBS=-lpython2.7 -levent
 
-build:
+ngru:
 	$(CC) -o ngru ngru.c $(LIBS)
 
 clean:
