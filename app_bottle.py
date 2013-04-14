@@ -1,6 +1,7 @@
 import bottle
 from bottle import route, run, template
 from wsgiref.simple_server import make_server
+from pprint import pprint
 
 @route('/')
 def index():
@@ -10,7 +11,10 @@ def index():
 def hello(name='World'):
     return template('<b>Hello {{name}}</b>!', name=name)
 
-app = bottle.app().wsgi
+def app(*args, **kwargs):
+    ret = bottle.app().wsgi(*args, **kwargs)
+    return ret
+
 if __name__ == '__main__':
     httpd = make_server('', 8000, app)
     print 'Serving on port 8000...'

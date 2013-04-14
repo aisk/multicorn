@@ -13,7 +13,8 @@
 
 #define ADDRESS "0.0.0.0"
 #define PORT 8000
-
+#define WSGI_MODULE "app_bottle"
+#define WSGI_FUNC "app"
 
 struct event_base *base;
 PyObject *pyResponseStatus;
@@ -33,8 +34,7 @@ char *strupr(char *str)
 void ngruPyvmInit()
 {
     Py_Initialize();
-
-    PyRun_SimpleString("print 'Python VM init sucessfull!'\n");
+    //PyRun_SimpleString("print 'Python VM init sucessfull!'\n");
 
     // add current path to sys path
     PyRun_SimpleString("import sys\n");
@@ -71,11 +71,11 @@ PyObject* ngruWsgiFuncGet()
     // get wsgi app module
     PyObject *pWsgiFunc;
     PyObject *pModule, *pName;
-    pName = PyString_FromString("app");
+    pName = PyString_FromString(WSGI_MODULE);
     pModule = PyImport_Import(pName);
     assert(pModule!=NULL);
     // get wsgi func
-    pWsgiFunc = PyObject_GetAttrString(pModule, "app");
+    pWsgiFunc = PyObject_GetAttrString(pModule, WSGI_FUNC);
     assert(pWsgiFunc!=NULL);
 
 
@@ -90,7 +90,7 @@ PyObject *ngruStartResponse(PyObject* self, PyObject* args)
     pyResponseHeaders = PyTuple_GetItem(args, 1);
     Py_INCREF(pyResponseHeaders);
     Py_INCREF(pyResponseStatus);
-    return PyString_FromString("sad");
+    return Py_None;//PyString_FromString("sad");
 }
 
 struct evbuffer *ngruParseWsgiResult(PyObject *pResult)
@@ -105,8 +105,7 @@ struct evbuffer *ngruParseWsgiResult(PyObject *pResult)
     PyObject *iterator;
     iterator = PySeqIter_New(pResult);
     while ((item=PyIter_Next(iterator)) != NULL) {
-        //PyObject *pResultString = PyList_GetItem(pResult, 0);
-        char *strResult = PyString_AsString(item);
+        const char *strResult = PyString_AsString(item);
         evbuffer_add_printf(buf, strResult);
         Py_DECREF(item);
     }
@@ -181,7 +180,9 @@ PyObject *ngruParseEnviron(struct evhttp_request *req)
     PyDict_SetStringItemString(environ, "CONTENT_TYPE", "");            // TODO
     PyDict_SetStringItemString(environ, "CONTENT_LENGTH", "");          // TODO
     PyDict_SetStringItemString(environ, "SERVER_NAME", host);
-    PyDict_SetIntItemString(environ, "SERVER_PORT", PORT);              // TODO
+    char port[10];
+    sprintf(port, "%d", PORT);
+    PyDict_SetStringItemString(environ, "SERVER_PORT", port);              // TODO
     PyDict_SetStringItemString(environ, "SERVER_PROTOCOL", "HTTP/1.1"); // TODO
 
     PyDict_SetStringItemString(environ, "wsgi.url_scheme", "http");
@@ -236,11 +237,10 @@ void ngruWsgiHandler(struct evhttp_request *req, void *arg)
     PyObject *header;
     for (i=0; i<PyList_Size(pyResponseHeaders);i++) {
         header = PyList_GetItem(pyResponseHeaders, i);
-        //PyTuple_GetItem(header, 0);
         char* key = PyString_AsString(PyTuple_GetItem(header, 0));
         char* value = PyString_AsString(PyTuple_GetItem(header, 1));
         evhttp_add_header(output_headers, key, value);
-        printf("%s: %s\n", key, value);
+        //printf("%s: %s\n", key, value);
     }
 
 

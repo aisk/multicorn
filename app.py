@@ -10,7 +10,7 @@ def app(environ, start_response):
         subject = 'World'
     start_response('200 OK', [
         ('Content-Type', 'text/html'),
-        ('aaa', 'xxxxxx'),
+        ('Foo', 'bar'),
     ])
     rets = [
         '<html><head></head><body>',
