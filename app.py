@@ -4,6 +4,7 @@ from pprint import pprint
 
 def app(environ, start_response):
     parameters = cgi.parse_qs(environ.get('QUERY_STRING', ''))
+    print environ['wsgi.input'].read(int(environ['CONTENT_LENGTH']))
     if 'subject' in parameters:
         subject = cgi.escape(parameters['subject'][0])
     else:

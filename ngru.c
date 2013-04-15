@@ -19,6 +19,7 @@
 struct event_base *base;
 PyObject *pyResponseStatus;
 PyObject *pyResponseHeaders;
+PyObject *StringIO;
 
 char *strupr(char *str) 
 { 
@@ -40,6 +41,10 @@ void ngruPyvmInit()
     PyRun_SimpleString("import sys\n");
     PyRun_SimpleString("sys.path.insert(0, \".\")\n");
 
+    // import cStringIO
+    PyObject *cStringIO;
+    cStringIO = PyImport_ImportModule("cStringIO");
+    StringIO = PyObject_GetAttrString(cStringIO, "StringIO");
 }
 
 void ngruPyvmDestoy()
@@ -70,16 +75,14 @@ PyObject* ngruWsgiFuncGet()
 {
     // get wsgi app module
     PyObject *pWsgiFunc;
-    PyObject *pModule, *pName;
-    pName = PyString_FromString(WSGI_MODULE);
-    pModule = PyImport_Import(pName);
+    PyObject *pModule;
+    pModule = PyImport_ImportModule(WSGI_MODULE);
     assert(pModule!=NULL);
     // get wsgi func
     pWsgiFunc = PyObject_GetAttrString(pModule, WSGI_FUNC);
     assert(pWsgiFunc!=NULL);
 
 
-    Py_DECREF(pName);
     Py_DECREF(pModule);
     return pWsgiFunc;
 }
@@ -140,35 +143,16 @@ PyObject *ngruParseEnviron(struct evhttp_request *req)
 
     char *method;
     switch (evhttp_request_get_command(req)) {
-        case (EVHTTP_REQ_GET):
-            method = "GET";
-            break;
-        case (EVHTTP_REQ_POST):
-            method = "POST";
-            break;
-        case (EVHTTP_REQ_HEAD):
-            method = "HEAD";
-            break;
-	    case (EVHTTP_REQ_PUT):
-            method = "PUT";
-            break;
-        case (EVHTTP_REQ_DELETE):
-            method = "DELETE";
-            break;
-        case (EVHTTP_REQ_OPTIONS):
-            method = "OPTIONS";
-            break;
-        case (EVHTTP_REQ_TRACE):
-            method = "TRACE";
-            break;
-        case (EVHTTP_REQ_CONNECT):
-            method = "CONNECT";
-            break;
-        case (EVHTTP_REQ_PATCH):
-            method = "PATCH";
-            break;
-        default:
-            break;
+        case (EVHTTP_REQ_GET): method = "GET"; break;
+        case (EVHTTP_REQ_POST): method = "POST"; break;
+        case (EVHTTP_REQ_HEAD): method = "HEAD"; break;
+	    case (EVHTTP_REQ_PUT): method = "PUT"; break;
+        case (EVHTTP_REQ_DELETE): method = "DELETE"; break;
+        case (EVHTTP_REQ_OPTIONS): method = "OPTIONS"; break;
+        case (EVHTTP_REQ_TRACE): method = "TRACE"; break;
+        case (EVHTTP_REQ_CONNECT): method = "CONNECT"; break;
+        case (EVHTTP_REQ_PATCH): method = "PATCH"; break;
+        default: break;
     }
 
     printf("%s: %s\n", method, uri);
@@ -181,8 +165,8 @@ PyObject *ngruParseEnviron(struct evhttp_request *req)
     PyDict_SetStringItemString(environ, "SCRIPT_NAME", "");             // TODO
     PyDict_SetStringItemString(environ, "PATH_INFO", path);
     PyDict_SetStringItemString(environ, "QUERY_STRING", query);
-    PyDict_SetStringItemString(environ, "CONTENT_TYPE", "");            // TODO
-    PyDict_SetStringItemString(environ, "CONTENT_LENGTH", "");          // TODO
+    PyDict_SetStringItemString(environ, "CONTENT_TYPE", "text/plain");
+    PyDict_SetStringItemString(environ, "CONTENT_LENGTH", "");
     PyDict_SetStringItemString(environ, "SERVER_NAME", host);
     char port[10];
     sprintf(port, "%d", PORT);
@@ -194,16 +178,44 @@ PyObject *ngruParseEnviron(struct evhttp_request *req)
     PyDict_SetItemString(environ, "wsgi.multiprocess", Py_False);
     PyDict_SetItemString(environ, "wsgi.run_once", Py_False);
     
+    // wsgi.input, use cStringIO as file object
+    struct evbuffer *buf;
+    buf = evhttp_request_get_input_buffer(req);
+    char* body;
+    int length;
+    length = evbuffer_get_length(buf);
+    body = (char *)malloc(length + 1);
+    memset(body, '\0', length + 1);
+    evbuffer_copyout(buf, body, length);
+    PyObject *pArgs;
+    pArgs = PyTuple_New(1);
+    PyTuple_SetItem(pArgs, 0, PyString_FromString(body));
+    PyObject *input;
+    input = PyObject_CallObject(StringIO, pArgs);
+    assert(input != NULL);
+    PyDict_SetItemString(environ, "wsgi.input", input);
+    free(body);
+    Py_DECREF(pArgs);
+    Py_DECREF(input);
 
     struct evkeyvalq *headers;
     headers = evhttp_request_get_input_headers(req);
     struct evkeyval *header;
     TAILQ_FOREACH(header, headers, next) {
-        PyObject *key = PyString_FromFormat("HTTP_%s", header->key);
-        PyObject *value = PyString_FromString(header->value);
-        PyDict_SetItem(environ, key, value);
-        Py_DECREF(key);
-        Py_DECREF(value);
+        // TODO: ingore case?
+        if (strcmp(header->key, "Content-Length")==0) {
+            PyDict_SetStringItemString(environ, "CONTENT_LENGTH", header->value);
+        }
+        else if (strcmp(header->key, "Content-Type")==0) {
+            PyDict_SetStringItemString(environ, "CONTENT_TYPE", header->value);
+        }
+        else {
+            PyObject *key = PyString_FromFormat("HTTP_%s", header->key);
+            PyObject *value = PyString_FromString(header->value);
+            PyDict_SetItem(environ, key, value);
+            Py_DECREF(key);
+            Py_DECREF(value);
+        }
     }
 
 
