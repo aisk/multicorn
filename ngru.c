@@ -19,7 +19,8 @@
 struct event_base *base;
 PyObject *pyResponseStatus;
 PyObject *pyResponseHeaders;
-PyObject *StringIO;
+PyObject *pyStringIO;
+PyObject *pyStderr;
 
 char *strupr(char *str) 
 { 
@@ -41,10 +42,15 @@ void ngruPyvmInit()
     PyRun_SimpleString("import sys\n");
     PyRun_SimpleString("sys.path.insert(0, \".\")\n");
 
-    // import cStringIO
     PyObject *cStringIO;
     cStringIO = PyImport_ImportModule("cStringIO");
-    StringIO = PyObject_GetAttrString(cStringIO, "StringIO");
+    pyStringIO = PyObject_GetAttrString(cStringIO, "StringIO");
+    Py_DECREF(cStringIO);
+
+    PyObject *sys;
+    sys = PyImport_ImportModule("sys");
+    pyStderr = PyObject_GetAttrString(sys, "stderr");
+    Py_DECREF(sys);
 }
 
 void ngruPyvmDestoy()
@@ -177,7 +183,8 @@ PyObject *ngruParseEnviron(struct evhttp_request *req)
     PyDict_SetItemString(environ, "wsgi.multithread", Py_False);
     PyDict_SetItemString(environ, "wsgi.multiprocess", Py_False);
     PyDict_SetItemString(environ, "wsgi.run_once", Py_False);
-    
+    PyDict_SetItemString(environ, "wsgi.errors", pyStderr);
+
     // wsgi.input, use cStringIO as file object
     struct evbuffer *buf;
     buf = evhttp_request_get_input_buffer(req);
@@ -191,7 +198,7 @@ PyObject *ngruParseEnviron(struct evhttp_request *req)
     pArgs = PyTuple_New(1);
     PyTuple_SetItem(pArgs, 0, PyString_FromString(body));
     PyObject *input;
-    input = PyObject_CallObject(StringIO, pArgs);
+    input = PyObject_CallObject(pyStringIO, pArgs);
     assert(input != NULL);
     PyDict_SetItemString(environ, "wsgi.input", input);
     free(body);
