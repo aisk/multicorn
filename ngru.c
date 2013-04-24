@@ -13,7 +13,7 @@
 
 #define ADDRESS "0.0.0.0"
 #define PORT 8000
-#define WSGI_MODULE "app"
+#define WSGI_MODULE "app_bottle"
 #define WSGI_FUNC "app"
 
 struct event_base *base;
@@ -104,20 +104,21 @@ PyObject *ngruStartResponse(PyObject* self, PyObject* args)
 
 struct evbuffer *ngruParseWsgiResult(PyObject *pResult)
 {
-    //assert(PyIter_Check(pResult));
-
     struct evbuffer *buf;
     buf = evbuffer_new();
     assert(buf != NULL);
-
+    
     PyObject *item;
     PyObject *iterator;
-    iterator = PySeqIter_New(pResult);
+    iterator = PyObject_GetIter(pResult);
+
     while ((item=PyIter_Next(iterator)) != NULL) {
         const char *strResult = PyString_AsString(item);
+        assert(strResult != NULL);
         evbuffer_add_printf(buf, strResult);
         Py_DECREF(item);
     }
+    Py_DECREF(iterator);
     return buf;
 }
 

@@ -20,7 +20,7 @@ def app(environ, start_response):
         '<table border="1"><tbody>'
     ]
     for key in sorted(environ.keys()):
-        rets.append('<tr><td>%s</td><td>%s</td></tr>' %(key, environ[key]))
+        rets.append('<tr><td>%s</td><td>%s</td></tr>' %(key, cgi.escape(str(environ[key]))))
     rets.append('</tbody></table></body></html>')
     return rets
 
