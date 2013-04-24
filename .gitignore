@@ -15,6 +15,7 @@
 *.exe
 *.out
 *.app
+ngru
 
 # Python Bytecode Cache
 *.pyc
