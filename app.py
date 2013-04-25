@@ -2,7 +2,7 @@ import cgi
 from wsgiref.simple_server import make_server
 from pprint import pprint
 
-def app(environ, start_response):
+def application(environ, start_response):
     parameters = cgi.parse_qs(environ.get('QUERY_STRING', ''))
     #print environ['wsgi.input'].read(int(environ['CONTENT_LENGTH']))
     if 'subject' in parameters:
