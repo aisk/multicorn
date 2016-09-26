@@ -1,6 +1,6 @@
 CC=clang
-CFLAGS=$(shell pkg-config libevent python --cflags) -Wall
-LIBS=$(shell pkg-config libevent python --libs)
+CFLAGS=$(shell pkg-config libevent python2 --cflags) -Wall
+LIBS=$(shell pkg-config libevent python2 --libs)
 
 ngru: ngru.c
 	$(CC) -o ngru ngru.c $(CFLAGS) $(LIBS)

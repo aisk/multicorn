@@ -3,6 +3,7 @@
 #include <string.h>
 #include <err.h>
 #include <assert.h>
+#include <signal.h>
 #include <sys/queue.h>
 
 #include <event2/event.h>
