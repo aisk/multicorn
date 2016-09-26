@@ -1,9 +1,9 @@
 CC=clang
-CFLAGS=-Wall
-LIBS=-lpython2.7 -levent
+CFLAGS=$(shell pkg-config libevent python --cflags) -Wall
+LIBS=$(shell pkg-config libevent python --libs)
 
-ngru:
-	$(CC) -o ngru ngru.c $(LIBS)
+ngru: ngru.c
+	$(CC) -o ngru ngru.c $(CFLAGS) $(LIBS)
 
 clean:
 	rm -f ngru
