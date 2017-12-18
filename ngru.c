@@ -10,7 +10,7 @@
 #include <event2/buffer.h>
 #include <event2/http.h>
 #include <event2/keyvalq_struct.h>
-#include <python2.7/Python.h>
+#include <Python.h>
 
 #define ADDRESS "0.0.0.0"
 #define PORT 8000
@@ -20,7 +20,7 @@
 struct event_base *base;
 PyObject *pyResponseStatus;
 PyObject *pyResponseHeaders;
-PyObject *pyStringIO;
+PyObject *pyBytesIO;
 PyObject *pyStderr;
 
 char *strupr(char *str) 
@@ -37,20 +37,21 @@ char *strupr(char *str)
 void ngruPyvmInit()
 {
     Py_Initialize();
-    //PyRun_SimpleString("print 'Python VM init sucessfull!'\n");
 
     // add current path to sys path
     PyRun_SimpleString("import sys\n");
     PyRun_SimpleString("sys.path.insert(0, \".\")\n");
 
-    PyObject *cStringIO;
-    cStringIO = PyImport_ImportModule("cStringIO");
-    pyStringIO = PyObject_GetAttrString(cStringIO, "StringIO");
-    Py_DECREF(cStringIO);
+    PyObject* ioModule = PyImport_ImportModule("io");
+    assert(ioModule != NULL);
+    pyBytesIO = PyObject_GetAttrString(ioModule, "BytesIO");
+    assert(pyBytesIO != NULL);
+    Py_DECREF(ioModule);
 
     PyObject *sys;
     sys = PyImport_ImportModule("sys");
     pyStderr = PyObject_GetAttrString(sys, "stderr");
+    assert(pyStderr != NULL);
     Py_DECREF(sys);
 }
 
@@ -63,7 +64,7 @@ void ngruPyvmDestoy()
 PyObject* PyDict_SetStringItemString(PyObject *pDict, const char *key, const char *value)
 {
     PyObject *pValue;
-    pValue = PyString_FromString(value);
+    pValue = PyUnicode_FromString(value);
     PyDict_SetItemString(pDict, key, pValue);
     Py_DecRef(pValue);
     return pDict;
@@ -72,7 +73,7 @@ PyObject* PyDict_SetStringItemString(PyObject *pDict, const char *key, const cha
 PyObject* PyDict_SetIntItemString(PyObject *pDict, const char *key, int value)
 {
     PyObject *pValue;
-    pValue = PyInt_FromLong(value);
+    pValue = PyLong_FromLong(value);
     PyDict_SetItemString(pDict, key, pValue);
     Py_DecRef(pValue);
     return pDict;
@@ -84,7 +85,7 @@ PyObject* ngruWsgiFuncGet()
     PyObject *pWsgiFunc;
     PyObject *pModule;
     pModule = PyImport_ImportModule(WSGI_MODULE);
-    assert(pModule!=NULL);
+    assert(pModule != NULL);
     // get wsgi func
     pWsgiFunc = PyObject_GetAttrString(pModule, WSGI_FUNC);
     assert(pWsgiFunc!=NULL);
@@ -100,7 +101,7 @@ PyObject *ngruStartResponse(PyObject* self, PyObject* args)
     pyResponseHeaders = PyTuple_GetItem(args, 1);
     Py_INCREF(pyResponseHeaders);
     Py_INCREF(pyResponseStatus);
-    return Py_None;//PyString_FromString("sad");
+    return Py_None;
 }
 
 struct evbuffer *ngruParseWsgiResult(PyObject *pResult)
@@ -114,9 +115,8 @@ struct evbuffer *ngruParseWsgiResult(PyObject *pResult)
     iterator = PyObject_GetIter(pResult);
 
     while ((item=PyIter_Next(iterator))) {
-        //puts(PyString_AsString(PyObject_Str(item)));
-        const char *strResult = PyString_AsString(item);
-        int size = PyString_Size(item);
+        const char *strResult = PyBytes_AsString(item);
+        int size = PyBytes_Size(item);
         assert(strResult != NULL);
         evbuffer_add(buf, strResult, size);
         Py_DECREF(item);
@@ -189,7 +189,7 @@ PyObject *ngruParseEnviron(struct evhttp_request *req)
     PyDict_SetItemString(environ, "wsgi.run_once", Py_False);
     PyDict_SetItemString(environ, "wsgi.errors", pyStderr);
 
-    // wsgi.input, use cStringIO as file object
+    // wsgi.input, use io.BytesIO as file object
     struct evbuffer *buf;
     buf = evhttp_request_get_input_buffer(req);
     char* body;
@@ -200,9 +200,12 @@ PyObject *ngruParseEnviron(struct evhttp_request *req)
     evbuffer_copyout(buf, body, length);
     PyObject *pArgs;
     pArgs = PyTuple_New(1);
-    PyTuple_SetItem(pArgs, 0, PyString_FromString(body));
+    PyTuple_SetItem(pArgs, 0, PyBytes_FromString(body));
     PyObject *input;
-    input = PyObject_CallObject(pyStringIO, pArgs);
+    input = PyObject_CallObject(pyBytesIO, pArgs);
+    if (input != NULL) {
+        PyErr_Print();
+    }
     assert(input != NULL);
     PyDict_SetItemString(environ, "wsgi.input", input);
     free(body);
@@ -221,8 +224,8 @@ PyObject *ngruParseEnviron(struct evhttp_request *req)
             PyDict_SetStringItemString(environ, "CONTENT_TYPE", header->value);
         }
         else {
-            PyObject *key = PyString_FromFormat("HTTP_%s", header->key);
-            PyObject *value = PyString_FromString(header->value);
+            PyObject *key = PyUnicode_FromFormat("HTTP_%s", header->key);
+            PyObject *value = PyUnicode_FromString(header->value);
             PyDict_SetItem(environ, key, value);
             Py_DECREF(key);
             Py_DECREF(value);
@@ -238,7 +241,7 @@ void ngruWsgiHandler(struct evhttp_request *req, void *arg)
     // build the python `start_response` function
     PyObject* (*fpFunc)(PyObject*, PyObject*) = ngruStartResponse;
     PyMethodDef methd = {"start_response", fpFunc, METH_VARARGS, "a new function"};
-    PyObject *name = PyString_FromString(methd.ml_name);
+    PyObject *name = PyBytes_FromString(methd.ml_name);
     PyObject* pStartResponse = PyCFunction_NewEx(&methd, NULL, name);
     Py_DECREF(name);
 
@@ -264,10 +267,9 @@ void ngruWsgiHandler(struct evhttp_request *req, void *arg)
     PyObject *header;
     for (i=0; i<PyList_Size(pyResponseHeaders);i++) {
         header = PyList_GetItem(pyResponseHeaders, i);
-        char* key = PyString_AsString(PyTuple_GetItem(header, 0));
-        char* value = PyString_AsString(PyTuple_GetItem(header, 1));
+        char* key = PyUnicode_AS_DATA(PyTuple_GetItem(header, 0));
+        char* value = PyUnicode_AS_DATA(PyTuple_GetItem(header, 1));
         evhttp_add_header(output_headers, key, value);
-        //printf("%s: %s\n", key, value);
     }
 
 
