@@ -7,7 +7,7 @@ Ngru is a python wsgi server writen in C. Using libevent's http library.
 on ubuntu
 
 ```
-> sudo apt-get install python2.7-dev
+> sudo apt-get install python3.6-dev
 > sudo apt-get install libevent-dev
 > make
 > ./ngru
