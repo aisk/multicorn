@@ -1,4 +1,3 @@
-CC=clang
 CFLAGS=$(shell pkg-config libevent python2 --cflags) -Wall
 LIBS=$(shell pkg-config libevent python2 --libs)
 
