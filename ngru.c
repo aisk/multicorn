@@ -47,8 +47,7 @@ void ngruPyvmInit() {
   assert(pyBytesIO != NULL);
   Py_DECREF(ioModule);
 
-  PyObject *sys;
-  sys = PyImport_ImportModule("sys");
+  PyObject *sys = PyImport_ImportModule("sys");
   pyStderr = PyObject_GetAttrString(sys, "stderr");
   assert(pyStderr != NULL);
   Py_DECREF(sys);
@@ -58,16 +57,14 @@ void ngruPyvmDestoy() { Py_Finalize(); }
 
 PyObject *PyDict_SetStringItemString(PyObject *pDict, const char *key,
                                      const char *value) {
-  PyObject *pValue;
-  pValue = PyUnicode_FromString(value);
+  PyObject *pValue = PyUnicode_FromString(value);
   PyDict_SetItemString(pDict, key, pValue);
   Py_DecRef(pValue);
   return pDict;
 }
 
 PyObject *PyDict_SetIntItemString(PyObject *pDict, const char *key, int value) {
-  PyObject *pValue;
-  pValue = PyLong_FromLong(value);
+  PyObject *pValue = PyLong_FromLong(value);
   PyDict_SetItemString(pDict, key, pValue);
   Py_DecRef(pValue);
   return pDict;
@@ -75,12 +72,10 @@ PyObject *PyDict_SetIntItemString(PyObject *pDict, const char *key, int value) {
 
 PyObject *ngruWsgiFuncGet() {
   // get wsgi app module
-  PyObject *pWsgiFunc;
-  PyObject *pModule;
-  pModule = PyImport_ImportModule(WSGI_MODULE);
+  PyObject *pModule = PyImport_ImportModule(WSGI_MODULE);
   assert(pModule != NULL);
   // get wsgi func
-  pWsgiFunc = PyObject_GetAttrString(pModule, WSGI_FUNC);
+  PyObject *pWsgiFunc = PyObject_GetAttrString(pModule, WSGI_FUNC);
   assert(pWsgiFunc != NULL);
 
   Py_DECREF(pModule);
@@ -96,13 +91,11 @@ PyObject *ngruStartResponse(PyObject *self, PyObject *args) {
 }
 
 struct evbuffer *ngruParseWsgiResult(PyObject *pResult) {
-  struct evbuffer *buf;
-  buf = evbuffer_new();
+  struct evbuffer *buf = evbuffer_new();
   assert(buf != NULL);
 
+  PyObject *iterator = PyObject_GetIter(pResult);
   PyObject *item;
-  PyObject *iterator;
-  iterator = PyObject_GetIter(pResult);
 
   while ((item = PyIter_Next(iterator))) {
     const char *strResult = PyBytes_AsString(item);
@@ -116,32 +109,27 @@ struct evbuffer *ngruParseWsgiResult(PyObject *pResult) {
 }
 
 PyObject *ngruParseEnviron(struct evhttp_request *req) {
-  const struct evhttp_uri *ev_uri;
-  ev_uri = evhttp_request_get_evhttp_uri(req);
+  const struct evhttp_uri *ev_uri = evhttp_request_get_evhttp_uri(req);
   assert(ev_uri != NULL);
 
-  const char *query;
-  query = evhttp_uri_get_query(ev_uri);
+  const char *query = evhttp_uri_get_query(ev_uri);
   if (query == NULL) {
     query = "";
   }
 
-  const char *path;
-  path = evhttp_uri_get_path(ev_uri);
+  const char *path = evhttp_uri_get_path(ev_uri);
 
-  const char *uri;
-  uri = evhttp_request_get_uri(req);
+  const char *uri = evhttp_request_get_uri(req);
 
-  const char *host;
-  host = evhttp_request_get_host(req);
+  const char *host = evhttp_request_get_host(req);
 
   // int port;
   // port = evhttp_uri_get_port(ev_uri);
 
-  const char *scheme;
-  scheme = evhttp_uri_get_scheme(ev_uri);
-  if (scheme == NULL)
+  const char *scheme = evhttp_uri_get_scheme(ev_uri);
+  if (scheme == NULL) {
     scheme = "http";
+  }
 
   char *method;
   switch (evhttp_request_get_command(req)) {
@@ -179,11 +167,11 @@ PyObject *ngruParseEnviron(struct evhttp_request *req) {
   printf("%s: %s\n", method, uri);
 
   // build the python environ dict
-  PyObject *environ;
-  environ = PyDict_New();
+  PyObject *environ = PyDict_New();
 
   PyDict_SetStringItemString(environ, "REQUEST_METHOD", method);
-  PyDict_SetStringItemString(environ, "SCRIPT_NAME", ""); // TODO
+  PyDict_SetStringItemString(environ, "SCRIPT_NAME",
+                             ""); // TODO(aisk): fix this
   PyDict_SetStringItemString(environ, "PATH_INFO", path);
   PyDict_SetStringItemString(environ, "QUERY_STRING", query);
   PyDict_SetStringItemString(environ, "CONTENT_TYPE", "text/plain");
@@ -192,7 +180,8 @@ PyObject *ngruParseEnviron(struct evhttp_request *req) {
   char port[10];
   sprintf(port, "%d", PORT);
   PyDict_SetStringItemString(environ, "SERVER_PORT", port);
-  PyDict_SetStringItemString(environ, "SERVER_PROTOCOL", "HTTP/1.1"); // TODO
+  PyDict_SetStringItemString(environ, "SERVER_PROTOCOL",
+                             "HTTP/1.1"); // TODO(aisk): fix this
 
   PyDict_SetStringItemString(environ, "wsgi.url_scheme", scheme);
   PyDict_SetItemString(environ, "wsgi.multithread", Py_False);
@@ -201,19 +190,14 @@ PyObject *ngruParseEnviron(struct evhttp_request *req) {
   PyDict_SetItemString(environ, "wsgi.errors", pyStderr);
 
   // wsgi.input, use io.BytesIO as file object
-  struct evbuffer *buf;
-  buf = evhttp_request_get_input_buffer(req);
-  char *body;
-  int length;
-  length = evbuffer_get_length(buf);
-  body = (char *)malloc(length + 1);
+  struct evbuffer *buf = evhttp_request_get_input_buffer(req);
+  int length = evbuffer_get_length(buf);
+  char *body = (char *)malloc(length + 1);
   memset(body, '\0', length + 1);
   evbuffer_copyout(buf, body, length);
-  PyObject *pArgs;
-  pArgs = PyTuple_New(1);
+  PyObject *pArgs = PyTuple_New(1);
   PyTuple_SetItem(pArgs, 0, PyBytes_FromString(body));
-  PyObject *input;
-  input = PyObject_CallObject(pyBytesIO, pArgs);
+  PyObject *input = PyObject_CallObject(pyBytesIO, pArgs);
   if (input != NULL) {
     PyErr_Print();
   }
@@ -223,11 +207,10 @@ PyObject *ngruParseEnviron(struct evhttp_request *req) {
   Py_DECREF(pArgs);
   Py_DECREF(input);
 
-  struct evkeyvalq *headers;
-  headers = evhttp_request_get_input_headers(req);
+  struct evkeyvalq *headers = evhttp_request_get_input_headers(req);
   struct evkeyval *header;
   TAILQ_FOREACH(header, headers, next) {
-    // TODO: ingore case?
+    // TODO(aisk): ingore case?
     if (strcmp(header->key, "Content-Length") == 0) {
       PyDict_SetStringItemString(environ, "CONTENT_LENGTH", header->value);
     } else if (strcmp(header->key, "Content-Type") == 0) {
@@ -253,35 +236,29 @@ void ngruWsgiHandler(struct evhttp_request *req, void *arg) {
   PyObject *pStartResponse = PyCFunction_NewEx(&methd, NULL, name);
   Py_DECREF(name);
 
-  PyObject *environ;
-  environ = ngruParseEnviron(req);
+  PyObject *environ = ngruParseEnviron(req);
 
   // call python wsgi application function
-  PyObject *pWsgiFunc;
-  pWsgiFunc = ngruWsgiFuncGet();
-  PyObject *pArgs;
-  pArgs = PyTuple_New(2);
+  PyObject *pWsgiFunc = ngruWsgiFuncGet();
+  PyObject *pArgs = PyTuple_New(2);
   PyTuple_SetItem(pArgs, 0, environ);
   PyTuple_SetItem(pArgs, 1, pStartResponse);
 
-  PyObject *pResult;
-  pResult = PyObject_CallObject(pWsgiFunc, pArgs);
+  PyObject *pResult = PyObject_CallObject(pWsgiFunc, pArgs);
   assert(pResult != NULL);
 
-  struct evkeyvalq *output_headers;
-  output_headers = evhttp_request_get_output_headers(req);
+  struct evkeyvalq *output_headers = evhttp_request_get_output_headers(req);
   evhttp_add_header(output_headers, "Wsgi-Server", "Ngru");
   Py_ssize_t i;
   PyObject *header;
   for (i = 0; i < PyList_Size(pyResponseHeaders); i++) {
     header = PyList_GetItem(pyResponseHeaders, i);
-    char *key = PyUnicode_AS_DATA(PyTuple_GetItem(header, 0));
-    char *value = PyUnicode_AS_DATA(PyTuple_GetItem(header, 1));
+    const char *key = PyUnicode_AS_DATA(PyTuple_GetItem(header, 0));
+    const char *value = PyUnicode_AS_DATA(PyTuple_GetItem(header, 1));
     evhttp_add_header(output_headers, key, value);
   }
 
-  struct evbuffer *buf;
-  buf = ngruParseWsgiResult(pResult);
+  struct evbuffer *buf = ngruParseWsgiResult(pResult);
 
   evhttp_send_reply(req, HTTP_OK, "OK", buf);
 
@@ -296,8 +273,7 @@ void ngruWsgiHandler(struct evhttp_request *req, void *arg) {
 }
 
 void ngruCommonHandler(struct evhttp_request *req, void *arg) {
-  struct evbuffer *buf;
-  buf = evbuffer_new();
+  struct evbuffer *buf = evbuffer_new();
 
   if (buf == NULL) {
     err(1, "failed to create response buffer");
@@ -323,8 +299,7 @@ int main(int argc, char *argv[]) {
   signal(SIGINT, signalHandler);
   signal(SIGTERM, signalHandler);
 
-  struct evhttp *http;
-  http = evhttp_new(base);
+  struct evhttp *http = evhttp_new(base);
   assert(evhttp_bind_socket(http, ADDRESS, PORT) == 0);
 
   evhttp_set_gencb(http, ngruWsgiHandler, NULL);
