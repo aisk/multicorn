@@ -19,3 +19,4 @@ ngru
 
 # Python Bytecode Cache
 *.pyc
+__pycache__/
