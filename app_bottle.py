@@ -21,5 +21,5 @@ def app(*args, **kwargs):
 
 if __name__ == '__main__':
     httpd = make_server('', 8000, app)
-    print 'Serving on port 8000...'
+    print('Serving on port 8000...')
     httpd.serve_forever()
