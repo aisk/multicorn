@@ -6,11 +6,11 @@
 #include <string.h>
 #include <sys/queue.h>
 
-#include <Python.h>
 #include <event2/buffer.h>
 #include <event2/event.h>
 #include <event2/http.h>
 #include <event2/keyvalq_struct.h>
+#include <python3.6m/Python.h>
 
 #define ADDRESS "0.0.0.0"
 #define PORT 8000
@@ -26,8 +26,9 @@ PyObject *pyStderr;
 char *strupr(char *str) {
   char *ptr = str;
   while (*ptr != '\0') {
-    if (islower(*ptr))
+    if (islower(*ptr)) {
       *ptr = toupper(*ptr);
+    }
     ptr++;
   }
   return str;
@@ -121,8 +122,9 @@ PyObject *ngruParseEnviron(struct evhttp_request *req) {
 
   const char *query;
   query = evhttp_uri_get_query(ev_uri);
-  if (query == NULL)
+  if (query == NULL) {
     query = "";
+  }
 
   const char *path;
   path = evhttp_uri_get_path(ev_uri);
@@ -297,8 +299,9 @@ void ngruCommonHandler(struct evhttp_request *req, void *arg) {
   struct evbuffer *buf;
   buf = evbuffer_new();
 
-  if (buf == NULL)
+  if (buf == NULL) {
     err(1, "failed to create response buffer");
+  }
 
   evbuffer_add_printf(buf, "<html><head><title>Hello!</title></head>");
   evbuffer_add_printf(buf, "<body><h1>It worked!</h1></body></html>");
