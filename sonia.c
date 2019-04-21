@@ -121,9 +121,7 @@ PyObject *send_callback(PyObject *self, PyObject *arguments) {
     PyObject_Print(data, stdout, 0);
     puts("");
     PyObject *future = PyObject_CallObject(Future, NULL);
-    PyObject_Print(future, stdout, 0);
-    puts("");
-    PyObject_CallMethodObjArgs(future, PyBytes_FromString("set_result"), Py_None, NULL);
+    PyObject_CallMethodObjArgs(future, PyUnicode_FromString("set_result"), Py_None, NULL);
     return future;
 }
 static PyMethodDef send_method = {"send", send_callback, METH_VARARGS, "doc"};
@@ -136,9 +134,8 @@ void handler(struct evhttp_request *req, void *args) {
     PyObject *result = PyObject_CallObject(application, arguments);
 
     arguments = PyTuple_Pack(2, PyCFunction_New(&donothing_ml, NULL), PyCFunction_New(&send_method, NULL));
-    PyObject *future = PyObject_CallObject(result, arguments);
-    PyObject_Print(future, stdout, 0);
-    puts("");
+    PyObject *coroutine = PyObject_CallObject(result, arguments);
+    PyObject_CallMethodObjArgs(coroutine, PyUnicode_FromString("send"), Py_None, NULL);
 
     struct evbuffer *buf = evbuffer_new();
     evbuffer_add_printf(buf, "<html><head><title>Hello!</title></head>");

@@ -3,7 +3,6 @@ class HelloWorld:
         ...
 
     async def __call__(self, receive, send):
-        print(self, receive, send)
         await send({
             'type': 'http.response.start',
             'status': 200,
