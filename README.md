@@ -6,11 +6,20 @@ Sonia is an ASGI server for python based on libevent.
 
 ## Build
 
-on ubuntu
+On ubuntu:
 
+```bash
+$ sudo apt-get install python3.7-dev
+$ sudo apt-get install libevent-dev
+$ make
+$ ./sonia
 ```
-> sudo apt-get install python3.7-dev
-> sudo apt-get install libevent-dev
-> make
-> ./sonia
+
+On macOS with homebrew:
+
+```sh
+$ brew install python3
+$ brew install libevent
+$ make
+$ ./sonia
 ```
