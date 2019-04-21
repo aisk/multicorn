@@ -34,9 +34,8 @@ void initialize() {
     PyRun_SimpleString("import sys\n");
     PyRun_SimpleString("sys.path.insert(0, \".\")\n");
 
-
-    PyObject *sys = PyImport_ImportModule("asyncio.futures");
-    Future = PyObject_GetAttrString(sys, "Future");
+    PyObject *futures = PyImport_ImportModule("asyncio.futures");
+    Future = PyObject_GetAttrString(futures, "Future");
 }
 
 
@@ -127,6 +126,7 @@ PyObject *send_callback(PyObject *self, PyObject *arguments) {
     PyObject_CallMethodObjArgs(future, PyBytes_FromString("set_result"), Py_None, NULL);
     return future;
 }
+static PyMethodDef send_method = {"send", send_callback, METH_VARARGS, "doc"};
 
 
 void handler(struct evhttp_request *req, void *args) {
@@ -135,7 +135,7 @@ void handler(struct evhttp_request *req, void *args) {
     PyObject *arguments = PyTuple_Pack(1, scope);
     PyObject *result = PyObject_CallObject(application, arguments);
 
-    arguments = PyTuple_Pack(2, PyCFunction_New(&donothing_ml, NULL), PyCFunction_New(&donothing_ml, NULL));
+    arguments = PyTuple_Pack(2, PyCFunction_New(&donothing_ml, NULL), PyCFunction_New(&send_method, NULL));
     PyObject *future = PyObject_CallObject(result, arguments);
     PyObject_Print(future, stdout, 0);
     puts("");

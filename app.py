@@ -4,7 +4,7 @@ class HelloWorld:
 
     async def __call__(self, receive, send):
         print(self, receive, send)
-        send({
+        await send({
             'type': 'http.response.start',
             'status': 200,
             'headers': [
@@ -12,7 +12,7 @@ class HelloWorld:
             ]
         })
         print(1)
-        send({
+        await send({
             'type': 'http.response.body',
             'body': b'Hello, world!',
         })
