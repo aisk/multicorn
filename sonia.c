@@ -13,6 +13,13 @@ struct event_base *base = NULL;
 PyObject *Future;
 
 
+static PyObject *
+donothing(PyObject *self, PyObject *args) {
+    Py_RETURN_NONE;
+}
+static PyMethodDef donothing_ml = {"donothing", donothing, METH_VARARGS, "doc"};
+
+
 void handle_signal(int signal) {
     event_base_loopbreak(base);
 }
@@ -128,10 +135,10 @@ void handler(struct evhttp_request *req, void *args) {
     PyObject *arguments = PyTuple_Pack(1, scope);
     PyObject *result = PyObject_CallObject(application, arguments);
 
-    arguments = PyTuple_Pack(2, Py_None, Py_None);
-    PyObject_Print(result, stdout, 0);
+    arguments = PyTuple_Pack(2, PyCFunction_New(&donothing_ml, NULL), PyCFunction_New(&donothing_ml, NULL));
+    PyObject *future = PyObject_CallObject(result, arguments);
+    PyObject_Print(future, stdout, 0);
     puts("");
-    // PyObject_CallObject(result, arguments);
 
     struct evbuffer *buf = evbuffer_new();
     evbuffer_add_printf(buf, "<html><head><title>Hello!</title></head>");
