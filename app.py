@@ -10,9 +10,7 @@ class HelloWorld:
                 [b'content-type', b'text/plain'],
             ]
         })
-        print(1)
         await send({
             'type': 'http.response.body',
             'body': b'Hello, world!',
         })
-        print(2)

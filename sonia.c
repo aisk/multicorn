@@ -17,7 +17,7 @@ static PyObject *
 donothing(PyObject *self, PyObject *args) {
     Py_RETURN_NONE;
 }
-static PyMethodDef donothing_ml = {"donothing", donothing, METH_VARARGS, "doc"};
+static PyMethodDef donothing_ml = {"donothing", donothing, METH_VARARGS, NULL};
 
 
 void handle_signal(int signal) {
@@ -117,14 +117,24 @@ PyObject *extract_scope(struct evhttp_request *request) {
 
 
 PyObject *send_callback(PyObject *self, PyObject *arguments) {
+    struct evhttp_request *req = PyCapsule_GetPointer(self, NULL);
     PyObject *data = PyTuple_GetItem(arguments, 0);
-    PyObject_Print(data, stdout, 0);
-    puts("");
+    PyObject *type = PyDict_GetItemString(data, "type");
+    if (PyUnicode_CompareWithASCIIString(type, "http.response.start") == 0) {
+        evhttp_send_reply_start(req, HTTP_OK, "OK");
+    } else if (PyUnicode_CompareWithASCIIString(type, "http.response.body") == 0) {
+        PyObject *body = PyDict_GetItemString(data, "body");
+        struct evbuffer *buf = evbuffer_new();
+        evbuffer_add_printf(buf, PyBytes_AsString(body));
+        evhttp_send_reply_chunk(req, buf);
+        evhttp_send_reply_end(req);
+        evbuffer_free(buf);
+    }
     PyObject *future = PyObject_CallObject(Future, NULL);
     PyObject_CallMethodObjArgs(future, PyUnicode_FromString("set_result"), Py_None, NULL);
     return future;
 }
-static PyMethodDef send_method = {"send", send_callback, METH_VARARGS, "doc"};
+static PyMethodDef send_method = {"send", send_callback, METH_VARARGS, NULL};
 
 
 void handler(struct evhttp_request *req, void *args) {
@@ -133,7 +143,7 @@ void handler(struct evhttp_request *req, void *args) {
     PyObject *arguments = PyTuple_Pack(1, scope);
     PyObject *result = PyObject_CallObject(application, arguments);
 
-    arguments = PyTuple_Pack(2, PyCFunction_New(&donothing_ml, NULL), PyCFunction_New(&send_method, NULL));
+    arguments = PyTuple_Pack(2, PyCFunction_New(&donothing_ml, NULL), PyCFunction_New(&send_method, PyCapsule_New(req, NULL, NULL)));
     PyObject *coroutine = PyObject_CallObject(result, arguments);
     PyObject_CallMethodObjArgs(coroutine, PyUnicode_FromString("send"), Py_None, NULL);
 
