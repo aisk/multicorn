@@ -129,5 +129,5 @@ const char* code_to_message(int code) {
         case 511 :
             return "Network Authentication Required";
     }
-    return "";
+    return "Unkonwn";
 }
