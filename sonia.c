@@ -149,14 +149,6 @@ void handler(struct evhttp_request *req, void *args) {
     arguments = PyTuple_Pack(2, PyCFunction_New(&donothing_ml, NULL), PyCFunction_New(&send_method, PyCapsule_New(req, NULL, NULL)));
     PyObject *coroutine = PyObject_CallObject(result, arguments);
     PyObject_CallMethodObjArgs(coroutine, PyUnicode_FromString("send"), Py_None, NULL);
-
-    struct evbuffer *buf = evbuffer_new();
-    evbuffer_add_printf(buf, "<html><head><title>Hello!</title></head>");
-    evbuffer_add_printf(buf, "<body><h1>It worked!</h1></body></html>");
-    evhttp_send_reply_start(req, HTTP_OK, "OK");
-    evhttp_send_reply_chunk(req, buf);
-    evhttp_send_reply_end(req);
-    evbuffer_free(buf);
 } 
 
 
