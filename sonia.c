@@ -8,6 +8,8 @@
 #include <event2/http.h>
 #include <event2/keyvalq_struct.h>
 
+#include "sonia.h"
+
 
 struct event_base *base = NULL;
 PyObject *Future;
@@ -121,7 +123,8 @@ PyObject *send_callback(PyObject *self, PyObject *arguments) {
     PyObject *data = PyTuple_GetItem(arguments, 0);
     PyObject *type = PyDict_GetItemString(data, "type");
     if (PyUnicode_CompareWithASCIIString(type, "http.response.start") == 0) {
-        evhttp_send_reply_start(req, HTTP_OK, "OK");
+        int code = PyLong_AsLong(PyDict_GetItemString(data, "status"));
+        evhttp_send_reply_start(req, code, code_to_message(code));
     } else if (PyUnicode_CompareWithASCIIString(type, "http.response.body") == 0) {
         PyObject *body = PyDict_GetItemString(data, "body");
         struct evbuffer *buf = evbuffer_new();
