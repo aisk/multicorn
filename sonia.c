@@ -38,6 +38,7 @@ void initialize() {
 
     PyObject *futures = PyImport_ImportModule("asyncio.futures");
     Future = PyObject_GetAttrString(futures, "Future");
+    Py_DECREF(futures);
 }
 
 
@@ -49,6 +50,7 @@ void finalize() {
 PyObject *import_application() {
     PyObject *module = PyImport_ImportModule("app");
     PyObject *application = PyObject_GetAttrString(module, "HelloWorld");
+    Py_DECREF(module);
     return application;
 }
 
@@ -145,10 +147,16 @@ void handler(struct evhttp_request *req, void *args) {
     PyObject *scope = extract_scope(req);
     PyObject *arguments = PyTuple_Pack(1, scope);
     PyObject *result = PyObject_CallObject(application, arguments);
+    Py_DECREF(application);
+    Py_DECREF(scope);
+    Py_DECREF(arguments);
 
     arguments = PyTuple_Pack(2, PyCFunction_New(&donothing_ml, NULL), PyCFunction_New(&send_method, PyCapsule_New(req, NULL, NULL)));
     PyObject *coroutine = PyObject_CallObject(result, arguments);
     PyObject_CallMethodObjArgs(coroutine, PyUnicode_FromString("send"), Py_None, NULL);
+    Py_DECREF(result);
+    Py_DECREF(arguments);
+    Py_DECREF(coroutine);
 } 
 
 
