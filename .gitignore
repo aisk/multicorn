@@ -19,3 +19,8 @@
 # Python Bytecode Cache
 *.pyc
 __pycache__/
+
+build/
+dist/
+*.egg-info/
+venv/
