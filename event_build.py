@@ -1,0 +1,85 @@
+from cffi import FFI
+
+
+ffibuilder = FFI()
+
+ffibuilder.cdef('''
+    const char* event_get_version(void);
+    struct event_base *event_base_new(void);
+    void event_base_free (struct event_base *);
+    int event_base_dispatch (struct event_base *);
+    int event_base_loopbreak (struct event_base *);
+
+    enum evhttp_cmd_type {
+        EVHTTP_REQ_GET     = 1,
+        EVHTTP_REQ_POST    = 2,
+        EVHTTP_REQ_HEAD    = 4,
+        EVHTTP_REQ_PUT     = 8,
+        EVHTTP_REQ_DELETE  = 16,
+        EVHTTP_REQ_OPTIONS = 32,
+        EVHTTP_REQ_TRACE   = 64,
+        EVHTTP_REQ_CONNECT = 128,
+        EVHTTP_REQ_PATCH   = 256
+    };
+    struct evhttp *evhttp_new(struct event_base *base);
+    void evhttp_free(struct evhttp *http);
+    int evhttp_bind_socket(struct evhttp *http, const char *address, uint16_t port);
+    void evhttp_set_gencb(struct evhttp *http, void(*cb)(struct evhttp_request *, void *), void *arg);
+    void evhttp_send_reply(struct evhttp_request *req, int code, const char *reason, struct evbuffer *databuf);
+    void evhttp_send_reply_start(struct evhttp_request *req, int code, const char *reason);
+    void evhttp_send_reply_chunk(struct evhttp_request *req, struct evbuffer *databuf);
+    void evhttp_send_reply_end(struct evhttp_request *req);
+    const struct evhttp_uri *evhttp_request_get_evhttp_uri(const struct evhttp_request *req);
+    const char *evhttp_uri_get_query(const struct evhttp_uri *uri);
+    const char *evhttp_uri_get_path(const struct evhttp_uri *uri);
+    const char *evhttp_request_get_uri(const struct evhttp_request *req);
+    const char *evhttp_request_get_host(struct evhttp_request *req);
+    int evhttp_uri_get_port(const struct evhttp_uri *uri);
+    const char *evhttp_uri_get_scheme(const struct evhttp_uri *uri);
+    enum evhttp_cmd_type evhttp_request_get_command(const struct evhttp_request *req);
+    struct evkeyvalq *evhttp_request_get_input_headers(struct evhttp_request *req);
+
+    struct evbuffer *evbuffer_new(void);
+    void evbuffer_free(struct evbuffer *buf);
+    int evbuffer_add_printf(struct evbuffer *buf, const char *fmt,...);
+
+    extern "Python" void http_handler(struct evhttp_request *req, void *args);
+    struct pair {
+        char *key;
+        char *value;
+    };
+
+    struct pair *get_headers_from_event(struct evkeyvalq *evheader);
+''')
+
+ffibuilder.set_source('_event_ffi', '''
+    #include <event2/buffer.h>
+    #include <event2/event.h>
+    #include <event2/http.h>
+    #include <event2/keyvalq_struct.h>
+    #include <event2/util.h>
+    #include <sys/queue.h>
+
+    struct pair {
+        char *key;
+        char *value;
+    };
+
+    struct pair *get_headers_from_event(struct evkeyvalq *evheader) {
+        struct pair *result = malloc(100 * sizeof (struct pair));  // TODO: check max of headers
+        int i = 0;
+        struct evkeyval *header;
+        TAILQ_FOREACH(header, evheader, next) {
+            result[i].key = header->key;
+            result[i].value = header->value;
+            i++;
+        }
+        result[i].key = "";
+        result[i].value = "";
+        return result;
+    }
+''', libraries=['event'])
+
+
+if __name__ == '__main__':
+    ffibuilder.compile(verbose=True)

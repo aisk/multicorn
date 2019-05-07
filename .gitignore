@@ -15,7 +15,6 @@
 *.exe
 *.out
 *.app
-sonia
 
 # Python Bytecode Cache
 *.pyc
