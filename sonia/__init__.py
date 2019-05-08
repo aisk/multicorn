@@ -1,9 +1,8 @@
+import asyncio
 from asyncio.futures import Future
 
 from _event_ffi import ffi, lib
-
-
-base = None
+from .event_loop import EventLoopPolicy
 
 
 def get_event_version():
@@ -11,12 +10,13 @@ def get_event_version():
 
 
 def start_http_server():
-    global base
-    base = lib.event_base_new()
+    asyncio.set_event_loop_policy(EventLoopPolicy())
+    loop = asyncio.get_event_loop()
+    base = loop.base
     http = lib.evhttp_new(base)
     lib.evhttp_set_gencb(http, lib.http_handler, ffi.NULL)
     lib.evhttp_bind_socket(http, b"localhost", 8080)
-    lib.event_base_dispatch(base)
+    loop.run_forever()
     lib.evhttp_free(http)
     lib.event_base_free(base)
 
