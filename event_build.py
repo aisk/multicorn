@@ -4,11 +4,23 @@ from cffi import FFI
 ffibuilder = FFI()
 
 ffibuilder.cdef('''
+    typedef void(* event_callback_fn) (int, short, void *);
     const char* event_get_version(void);
     struct event_base *event_base_new(void);
     void event_base_free (struct event_base *);
     int event_base_dispatch (struct event_base *);
     int event_base_loopbreak (struct event_base *);
+    struct event *event_new(struct event_base *, int, short, event_callback_fn, void *);
+    int event_add(struct event *ev, const struct timeval *timeout);
+
+    #define EV_TIMEOUT 0x01
+    #define EV_READ 0x02
+    #define EV_WRITE 0x04
+    #define EV_SIGNAL 0x08
+    #define EV_PERSIST 0x10
+    #define EV_ET 0x20
+    #define EV_FINALIZE 0x40
+    #define EV_CLOSED 0x80
 
     enum evhttp_cmd_type {
         EVHTTP_REQ_GET     = 1,
@@ -29,7 +41,9 @@ ffibuilder.cdef('''
     void evhttp_send_reply_start(struct evhttp_request *req, int code, const char *reason);
     void evhttp_send_reply_chunk(struct evhttp_request *req, struct evbuffer *databuf);
     void evhttp_send_reply_end(struct evhttp_request *req);
+    void evhttp_request_free(struct evhttp_request *req);
     const struct evhttp_uri *evhttp_request_get_evhttp_uri(const struct evhttp_request *req);
+    void evhttp_uri_free(struct evhttp_uri *uri);
     const char *evhttp_uri_get_query(const struct evhttp_uri *uri);
     const char *evhttp_uri_get_path(const struct evhttp_uri *uri);
     const char *evhttp_request_get_uri(const struct evhttp_request *req);
@@ -44,6 +58,7 @@ ffibuilder.cdef('''
     int evbuffer_add_printf(struct evbuffer *buf, const char *fmt,...);
 
     extern "Python" void http_handler(struct evhttp_request *req, void *args);
+    extern "Python" void signal_handler(int, short, void *);
     struct pair {
         char *key;
         char *value;
