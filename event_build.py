@@ -4,6 +4,7 @@ from cffi import FFI
 ffibuilder = FFI()
 
 ffibuilder.cdef('''
+
     typedef void(* event_callback_fn) (int, short, void *);
     const char* event_get_version(void);
     struct event_base *event_base_new(void);
@@ -59,12 +60,14 @@ ffibuilder.cdef('''
 
     extern "Python" void http_handler(struct evhttp_request *req, void *args);
     extern "Python" void signal_handler(int, short, void *);
+    extern "Python" void timer_handler(int, short, void *);
     struct pair {
         char *key;
         char *value;
     };
 
     struct pair *get_headers_from_event(struct evkeyvalq *evheader);
+    struct timeval *new_timeval(long sec, long usec);
 ''')
 
 ffibuilder.set_source('_event_ffi', '''
@@ -74,6 +77,7 @@ ffibuilder.set_source('_event_ffi', '''
     #include <event2/keyvalq_struct.h>
     #include <event2/util.h>
     #include <sys/queue.h>
+    #include <sys/time.h>
 
     struct pair {
         char *key;
@@ -92,6 +96,13 @@ ffibuilder.set_source('_event_ffi', '''
         result[i].key = "";
         result[i].value = "";
         return result;
+    }
+
+    struct timeval *new_timeval(long sec, long usec) {
+        struct timeval *val = malloc(sizeof (struct timeval));
+        val->tv_sec = sec;
+        val->tv_usec = usec;
+        return val;
     }
 ''', libraries=['event'])
 

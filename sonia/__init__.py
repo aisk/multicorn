@@ -3,6 +3,7 @@ from asyncio.futures import Future
 
 from _event_ffi import ffi, lib
 from .event_loop import EventLoopPolicy
+from .dd import dd
 
 
 def get_event_version():
@@ -27,7 +28,7 @@ def http_handler(req, args):
     from app import HelloWorld
     instance = HelloWorld(scope)
 
-    def send(data):
+    async def send(data):
         if data['type'] == 'http.response.start':
             status_code = data['status']
             lib.evhttp_send_reply_start(req, status_code, b'Ok')
@@ -42,11 +43,8 @@ def http_handler(req, args):
         future.set_result(None)
         return future
 
-    co = instance(lambda *args, **kwargs: None, send)
-    try:
-        co.send(None)
-    except StopIteration:
-        pass
+    dd['co'] = instance(lambda *args, **kwargs: None, send)
+    dd['co'].send(None)
 
 
 def extract_scope(req):

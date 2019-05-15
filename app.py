@@ -1,8 +1,12 @@
+import asyncio
+
+
 class HelloWorld:
     def __init__(self, scope):
         ...
 
     async def __call__(self, receive, send):
+        await asyncio.sleep(1)
         await send({
             'type': 'http.response.start',
             'status': 200,
