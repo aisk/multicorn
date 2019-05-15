@@ -3,6 +3,7 @@ from asyncio.futures import Future
 
 from _event_ffi import ffi, lib
 from .event_loop import EventLoopPolicy
+from .http_messages import http_messages
 from .dd import dd
 
 
@@ -31,7 +32,7 @@ def http_handler(req, args):
     async def send(data):
         if data['type'] == 'http.response.start':
             status_code = data['status']
-            lib.evhttp_send_reply_start(req, status_code, b'Ok')
+            lib.evhttp_send_reply_start(req, status_code, http_messages.get(status_code, b'Unknown'))
         if data['type'] == 'http.response.body':
             body = data['body']
             buf = lib.evbuffer_new()
