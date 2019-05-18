@@ -25,12 +25,16 @@ def timer_handler(_, events, args):
 
 class EventLoop(asyncio.events.AbstractEventLoop):
     def __init__(self):
+        self._debug = False
         self.base = lib.event_base_new()
         event = lib.event_new(self.base, signal.SIGINT.value, lib.EV_SIGNAL | lib.EV_PERSIST, lib.signal_handler, self.base)
         lib.event_add(event, ffi.NULL)
 
+    def set_debug(self, debug):
+        self._debug = debug
+
     def get_debug(self):
-        return True
+        return self._debug
 
     def create_future(self):
         return asyncio.futures.Future()
