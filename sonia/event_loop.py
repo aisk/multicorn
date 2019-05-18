@@ -15,7 +15,8 @@ def signal_handler(sig, events, arg):
 
 @ffi.def_extern()
 def timer_handler(_, events, args):
-    dd['handle']._run()
+    handle = ffi.from_handle(args)
+    handle._run()
     try:
         dd['co'].send(None)
     except StopIteration:
@@ -38,14 +39,11 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         lib.event_base_dispatch(self.base)
 
     def call_later(self, delay, callback, *args, context=None):
-        dd['callback'] = callback
-        dd['args'] = args
-
-        event = lib.event_new(self.base, -1, lib.EV_TIMEOUT, lib.timer_handler, ffi.NULL)
+        handle = asyncio.TimerHandle(time.time() + delay, callback, args, self)
+        self.userdata = ffi.new_handle(handle)
+        event = lib.event_new(self.base, -1, lib.EV_TIMEOUT, lib.timer_handler, self.userdata)
         timeval = lib.new_timeval(1, delay)
         lib.event_add(event, timeval)
-        handle = asyncio.TimerHandle(time.time() + delay, callback, args, self)
-        dd['handle'] = handle
         return handle
 
     def _timer_handle_cancelled(self, handle):
