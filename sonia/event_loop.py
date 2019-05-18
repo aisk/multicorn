@@ -54,6 +54,18 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         # TODO: finish this shit.
         return False
 
+    def run_until_complete(self, future):
+        try:
+            future.send(None)
+        except StopIteration:
+            pass
+
+    async def shutdown_asyncgens(self):
+        # TODO: finish this
+        ...
+
+    def close(self):
+        lib.event_base_free(self.base)
 
 class EventLoopPolicy(asyncio.events.BaseDefaultEventLoopPolicy):
     def _loop_factory(self):
