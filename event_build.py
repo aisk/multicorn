@@ -6,11 +6,13 @@ ffibuilder = FFI()
 ffibuilder.cdef('''
 
     typedef void(* event_callback_fn) (int, short, void *);
+    typedef int(* event_base_foreach_event_cb) (const struct event_base *, const struct event *, void *);
     const char* event_get_version(void);
     struct event_base *event_base_new(void);
     void event_base_free (struct event_base *);
     int event_base_dispatch (struct event_base *);
     int event_base_loop(struct event_base *, int);
+    int event_base_foreach_event(struct event_base *base, event_base_foreach_event_cb fn, void *arg);
     int event_base_loopbreak (struct event_base *);
     struct event *event_new(struct event_base *, int, short, event_callback_fn, void *);
     int event_add(struct event *ev, const struct timeval *timeout);
@@ -63,6 +65,7 @@ ffibuilder.cdef('''
     void evbuffer_free(struct evbuffer *buf);
     int evbuffer_add_printf(struct evbuffer *buf, const char *fmt,...);
 
+    extern "Python" int event_callback(const struct event_base *, const struct event *, void *);
     extern "Python" void http_handler(struct evhttp_request *req, void *args);
     extern "Python" void signal_handler(int, short, void *);
     extern "Python" void timer_handler(int, short, void *);

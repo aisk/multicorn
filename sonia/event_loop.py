@@ -23,6 +23,12 @@ def timer_handler(_, events, args):
         pass
 
 
+@ffi.def_extern()
+def event_callback(base, event, args):
+    # print('event_callback called:', base, event, args)
+    return 0
+
+
 class EventLoop(asyncio.events.AbstractEventLoop):
     def __init__(self):
         self._debug = False
@@ -40,7 +46,9 @@ class EventLoop(asyncio.events.AbstractEventLoop):
         return asyncio.futures.Future()
 
     def run_forever(self):
-        lib.event_base_dispatch(self.base)
+        while True:
+            lib.event_base_foreach_event(self.base, lib.event_callback, ffi.NULL)
+            lib.event_base_loop(self.base, lib.EVLOOP_ONCE)
 
     def call_later(self, delay, callback, *args, context=None):
         handle = asyncio.TimerHandle(time.time() + delay, callback, args, self)
