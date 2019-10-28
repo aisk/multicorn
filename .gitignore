@@ -25,3 +25,4 @@ dist/
 *.egg-info/
 .eggs/
 venv/
+.mypy_cache/
