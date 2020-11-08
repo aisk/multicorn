@@ -1,5 +1,6 @@
 import socket
 import threading
+import time
 
 from backports import interpreters
 
@@ -23,6 +24,7 @@ class EchoWorker:
                     if not data:
                         break
                     client.sendall(data)
+                    time.sleep(0.0001)  # For now (Python3.8), we need this for current interpreter to yield.
 
 
 class Server:
