@@ -1,5 +1,7 @@
 # multicorn
 
+![multicorn](https://i.redd.it/ipomv2xs5ew41.jpg)
+
 Multicorn is an experimental multi-interpreter server/framework for Python.
 
 ## Motivation
