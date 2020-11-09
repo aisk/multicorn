@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "sonia"
+name = "multicorn"
 version = "0.1.0"
 description = ""
 authors = ["An Long <aisk1988@gmail.com>"]
