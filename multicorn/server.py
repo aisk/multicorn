@@ -1,23 +1,26 @@
 import socket
 import threading
+from typing import Any, Iterable
 
 from backports import interpreters
 
 
 class Server:
-    def __init__(self, worker: str, /, workers_count: int = 4):
+    def __init__(self, worker: str, worker_args: Iterable[Any] = (), *, workers_count: int = 4):
         splited = worker.split(":")
-        module_name = splited[0]
-        class_name = splited[1]
-        self.module_name = module_name
-        self.class_name = class_name
+        self.module_name = splited[0]
+        self.class_name = splited[1]
+
+        self.worker_args = worker_args
+
         self.workers_count = workers_count
 
     def _run_worker(self, bind, fd):
         interpreter = interpreters.create()
         source = f"""
 from {self.module_name} import {self.class_name}
-worker = {self.class_name}()
+# worker = {self.class_name}(*{[repr(x) for x in self.worker_args]})
+worker = {self.class_name}(*{self.worker_args})
 worker.run({bind}, {fd})
 """
         interpreter.run(source)

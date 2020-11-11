@@ -1,3 +1,4 @@
+import importlib
 import socket
 from wsgiref import simple_server
 
@@ -24,8 +25,16 @@ class WSGIServer(simple_server.WSGIServer):
 
 
 class WSGIWorker:
+    def __init__(self, app):
+        splited = app.split(":")
+        module_name = splited[0]
+        class_name = splited[1]
+
+        module = importlib.import_module(module_name)
+        self.app = getattr(module, class_name)
+
     def run(self, bind, fd):
         server = WSGIServer(bind, simple_server.WSGIRequestHandler)
         server.socket = socket.fromfd(fd, socket.AF_INET, socket.SOCK_STREAM)
-        server.set_app(simple_server.demo_app)
+        server.set_app(self.app)
         server.serve_forever()
