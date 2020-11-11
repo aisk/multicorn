@@ -12,7 +12,7 @@ This caused huge memory costs and made stateful server programming harder becaus
 
 [PEP554](https://www.python.org/dev/peps/pep-0554/) brings the new hope: we can have multiple python interpreters in one process, and every interpreter has its own GIL. All the interpreters can run parallel.
 
-Multicorn is an experimental project for writing server-side network applications in multi-interpreters. It's more like a multi-interpreter version of [gunicorn]https://gunicorn.org/), instead of using multi-process.
+Multicorn is an experimental project for writing server-side network applications in multi-interpreters. It's more like a multi-interpreter version of [gunicorn](https://gunicorn.org/), instead of using multi-process.
 
 ## Current status
 
