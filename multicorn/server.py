@@ -5,7 +5,10 @@ from backports import interpreters
 
 
 class Server:
-    def __init__(self, module_name: str, class_name: str, /, workers_count: int = 4):
+    def __init__(self, worker: str, /, workers_count: int = 4):
+        splited = worker.split(":")
+        module_name = splited[0]
+        class_name = splited[1]
         self.module_name = module_name
         self.class_name = class_name
         self.workers_count = workers_count
