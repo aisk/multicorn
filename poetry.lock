@@ -16,7 +16,7 @@ python-versions = ">=3.8"
 
 [[package]]
 name = "black"
-version = "21.5b2"
+version = "21.6b0"
 description = "The uncompromising code formatter."
 category = "dev"
 optional = false
@@ -141,7 +141,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "e082a63c0db1245a95f2cb247775e6950c2667e63a92fc26b5ffd6b57570759c"
+content-hash = "70fd7139e45169d81962a463f1fc9529104ce68b76618075a6db4ed2f195296b"
 
 [metadata.files]
 appdirs = [
@@ -152,8 +152,8 @@ appdirs = [
     {file = "backports.interpreters-0.1.0.tar.gz", hash = "sha256:4429c2d58cc9b78bd63028bd8a856784b1a25e233bba34c9c549231945aa9f0f"},
 ]
 black = [
-    {file = "black-21.5b2-py3-none-any.whl", hash = "sha256:e5cf21ebdffc7a9b29d73912b6a6a9a4df4ce70220d523c21647da2eae0751ef"},
-    {file = "black-21.5b2.tar.gz", hash = "sha256:1fc0e0a2c8ae7d269dfcf0c60a89afa299664f3e811395d40b1922dff8f854b5"},
+    {file = "black-21.6b0-py3-none-any.whl", hash = "sha256:dfb8c5a069012b2ab1e972e7b908f5fb42b6bbabcba0a788b86dc05067c7d9c7"},
+    {file = "black-21.6b0.tar.gz", hash = "sha256:dc132348a88d103016726fe360cb9ede02cecf99b76e3660ce6c596be132ce04"},
 ]
 click = [
     {file = "click-7.1.2-py2.py3-none-any.whl", hash = "sha256:dacca89f4bfadd5de3d7489b7c8a566eee0d3676333fbb50030263894c38c0dc"},
