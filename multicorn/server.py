@@ -1,5 +1,6 @@
 import socket
 import threading
+import time
 from typing import Any, Iterable
 
 from backports import interpreters
@@ -34,4 +35,6 @@ worker.run({bind}, {fd})
             t = threading.Thread(target=self._run_worker, args=[bind, sock.fileno()])
             t.start()
             threads.append(t)
+            # import socket module in parallel will cause sigfault, let's hack it here.
+            time.sleep(0.1)
         [t.join() for t in threads]
