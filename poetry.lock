@@ -8,7 +8,7 @@ python-versions = ">=3.8"
 
 [[package]]
 name = "black"
-version = "21.8b0"
+version = "21.9b0"
 description = "The uncompromising code formatter."
 category = "dev"
 optional = false
@@ -149,14 +149,6 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "typing-extensions"
-version = "3.7.4.3"
-description = "Backported and Experimental Type Hints for Python 3.5+"
-category = "dev"
-optional = false
-python-versions = "*"
-
-[[package]]
-name = "typing-extensions"
 version = "3.10.0.2"
 description = "Backported and Experimental Type Hints for Python 3.5+"
 category = "dev"
@@ -166,15 +158,15 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "792d5cbd63b928791105096ac1f3820aec23b9552ec338fe1fca9b1a5bfac483"
+content-hash = "3afe7da2841f8ffb39b236912adf91fd1e761adc64d8b0a210a3bbbb749bf8b2"
 
 [metadata.files]
 "backports.interpreters" = [
     {file = "backports.interpreters-0.1.0.tar.gz", hash = "sha256:4429c2d58cc9b78bd63028bd8a856784b1a25e233bba34c9c549231945aa9f0f"},
 ]
 black = [
-    {file = "black-21.8b0-py3-none-any.whl", hash = "sha256:2a0f9a8c2b2a60dbcf1ccb058842fb22bdbbcb2f32c6cc02d9578f90b92ce8b7"},
-    {file = "black-21.8b0.tar.gz", hash = "sha256:570608d28aa3af1792b98c4a337dbac6367877b47b12b88ab42095cfc1a627c2"},
+    {file = "black-21.9b0-py3-none-any.whl", hash = "sha256:380f1b5da05e5a1429225676655dddb96f5ae8c75bdf91e53d798871b902a115"},
+    {file = "black-21.9b0.tar.gz", hash = "sha256:7de4cfc7eb6b710de325712d40125689101d21d25283eed7e9998722cf10eb91"},
 ]
 click = [
     {file = "click-7.1.2-py2.py3-none-any.whl", hash = "sha256:dacca89f4bfadd5de3d7489b7c8a566eee0d3676333fbb50030263894c38c0dc"},
@@ -287,9 +279,6 @@ tomli = [
     {file = "tomli-1.0.4.tar.gz", hash = "sha256:be670d0d8d7570fd0ea0113bd7bb1ba3ac6706b4de062cc4c952769355c9c268"},
 ]
 typing-extensions = [
-    {file = "typing_extensions-3.7.4.3-py2-none-any.whl", hash = "sha256:dafc7639cde7f1b6e1acc0f457842a83e722ccca8eef5270af2d74792619a89f"},
-    {file = "typing_extensions-3.7.4.3-py3-none-any.whl", hash = "sha256:7cb407020f00f7bfc3cb3e7881628838e69d8f3fcab2f64742a5e76b2f841918"},
-    {file = "typing_extensions-3.7.4.3.tar.gz", hash = "sha256:99d4073b617d30288f569d3f13d2bd7548c3a7e4c8de87db09a9d29bb3a4a60c"},
     {file = "typing_extensions-3.10.0.2-py2-none-any.whl", hash = "sha256:d8226d10bc02a29bcc81df19a26e56a9647f8b0a6d4a83924139f4a8b01f17b7"},
     {file = "typing_extensions-3.10.0.2-py3-none-any.whl", hash = "sha256:f1d25edafde516b146ecd0613dabcc61409817af4766fbbcfb8d1ad4ec441a34"},
     {file = "typing_extensions-3.10.0.2.tar.gz", hash = "sha256:49f75d16ff11f1cd258e1b988ccff82a3ca5570217d7ad8c5f48205dd99a677e"},
