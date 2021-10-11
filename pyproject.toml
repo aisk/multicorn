@@ -11,7 +11,7 @@ python = "^3.8"
 
 [tool.poetry.dev-dependencies]
 mypy = "^0.910"
-flake8 = "^3.9.2"
+flake8 = "^4.0.1"
 black = "^21.9b0"
 
 [build-system]
