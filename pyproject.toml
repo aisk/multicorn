@@ -10,7 +10,7 @@ python = "^3.8"
 "backports.interpreters" = "^0.1.0"
 
 [tool.poetry.dev-dependencies]
-mypy = "^0.961"
+mypy = "^0.971"
 flake8 = "^4.0.1"
 black = "^22.6"
 
