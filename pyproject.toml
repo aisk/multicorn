@@ -12,7 +12,7 @@ python = "^3.8"
 [tool.poetry.dev-dependencies]
 mypy = "^1.7"
 flake8 = "^5.0.4"
-black = "^23.11"
+black = "^23.12"
 
 [build-system]
 requires = ["poetry>=0.12"]
