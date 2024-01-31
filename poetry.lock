@@ -2,12 +2,12 @@
 
 [[package]]
 name = "backports-interpreters"
-version = "0.2.0"
+version = "0.2.1"
 description = "Backport of Python interpreters module described in PEP554"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "backports.interpreters-0.2.0.tar.gz", hash = "sha256:c93e2c9e56c963c28b20494b15a67fa2a544fddd18c22cdbd3d28410fb76a94a"},
+    {file = "backports.interpreters-0.2.1.tar.gz", hash = "sha256:f2341ccdb7cc2da8468ba6f5c4b83c2eaed293cc49c74d3b870a992ddfe8dfa5"},
 ]
 
 [package.extras]
