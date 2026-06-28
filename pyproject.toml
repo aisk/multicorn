@@ -8,7 +8,7 @@ authors = [
 license = "MIT"
 requires-python = ">=3.8"
 dependencies = [
-    "backports.interpreters>=0.2.0,<0.3.0",
+    "backports.interpreters>=0.3.0,<0.4.0",
 ]
 
 [dependency-groups]

@@ -24,7 +24,7 @@ from {self.module_name} import {self.class_name}
 worker = {self.class_name}(*{self.worker_args})
 worker.run({bind}, {fd})
 """
-        interpreter.run(source)
+        interpreter.exec(source)
 
     def run(self, bind):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

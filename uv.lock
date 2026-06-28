@@ -10,9 +10,12 @@ resolution-markers = [
 
 [[package]]
 name = "backports-interpreters"
-version = "0.2.1"
+version = "0.3.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/d1/21/67d2bc5c4a95c41296faa49d8c41d092f1354e281c5aa90bf92fdbee9e6f/backports.interpreters-0.2.1.tar.gz", hash = "sha256:f2341ccdb7cc2da8468ba6f5c4b83c2eaed293cc49c74d3b870a992ddfe8dfa5", size = 5487, upload-time = "2024-01-31T09:24:19.841Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d1/3d/5033f23d16f6e262a97dfddd7043c3a2084f054cc60ea10390403d11357e/backports_interpreters-0.3.0.tar.gz", hash = "sha256:dfe1258b01d435b68fa481cf7c354b8b3f9b2e0d58cdc47865f0216d1efe6f93", size = 10078, upload-time = "2026-06-27T15:03:21.903Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/77/6d/5b78ae5a5d9da02bde1e86caf37debdb9b3851782f60a27bef2946fc88d5/backports_interpreters-0.3.0-py3-none-any.whl", hash = "sha256:4b0bbd4e009b86fd2f1001ee73d36e117134ea9f7f4c0e0b65e3d8a720572f3d", size = 10851, upload-time = "2026-06-27T15:03:20.986Z" },
+]
 
 [[package]]
 name = "black"
@@ -280,7 +283,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "backports-interpreters", specifier = ">=0.2.0,<0.3.0" }]
+requires-dist = [{ name = "backports-interpreters", specifier = ">=0.3.0,<0.4.0" }]
 
 [package.metadata.requires-dev]
 dev = [
