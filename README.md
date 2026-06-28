@@ -10,7 +10,7 @@ For a long time, Python programmers were suffered from Python's GIL issue when b
 
 This caused huge memory costs and made stateful server programming harder because we can't share data between processes easily.
 
-[PEP554](https://www.python.org/dev/peps/pep-0554/) brings the new hope: we can have multiple python interpreters in one process, and every interpreter has its own GIL. All the interpreters can run parallel.
+[PEP 734](https://peps.python.org/pep-0734/) brings the new hope: it adds the `concurrent.interpreters` module to the standard library (Python 3.14), so we can have multiple python interpreters in one process. Combined with the per-interpreter GIL from [PEP 684](https://peps.python.org/pep-0684/) (Python 3.12), every interpreter has its own GIL and all the interpreters can run in parallel.
 
 Multicorn is an experimental project for writing server-side network applications in multi-interpreters. It's more like a multi-interpreter version of [gunicorn](https://gunicorn.org/), instead of using multi-process.
 
@@ -23,9 +23,9 @@ Multicorn is an experimental project for writing server-side network application
 
 ## Limitations
 
-Multicorn is using private modules which are added in python3.8, so python3.8 or later is required.
+Multicorn uses the `concurrent.interpreters` module from [PEP 734](https://peps.python.org/pep-0734/). On Python 3.14 or later this module is available in the standard library; on earlier versions it is provided by the [backports.interpreters](https://github.com/aisk/backports.interpreters) package, so Python 3.8 or later is required.
 
-For the current implementation of the sub-interpreter in python, the GIL is shared between all sub-interpreters. So multicorn can not use multi CPU cores in one process now sadly. There is a project to solve it: [multi-core-python](https://github.com/ericsnowcurrently/multi-core-python/), let's keep tracking on it.
+True multi-core parallelism relies on the per-interpreter GIL introduced in [PEP 684](https://peps.python.org/pep-0684/), which is only available on Python 3.12 and later. On Python 3.11 or earlier all sub-interpreters share a single GIL, so multicorn runs but can not use multiple CPU cores in one process.
 
 ## License
 
