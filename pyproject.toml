@@ -1,15 +1,36 @@
 [project]
 name = "multicorn"
 version = "0.2.0"
-description = ""
+description = "An experimental multi-interpreter server/framework for Python."
+readme = "README.md"
 authors = [
     { name = "An Long", email = "aisk1988@gmail.com" },
 ]
 license = "MIT"
 requires-python = ">=3.8"
+keywords = ["server", "wsgi", "asgi", "interpreters", "subinterpreters", "gil"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Internet :: WWW/HTTP :: WSGI :: Server",
+]
 dependencies = [
     "backports.interpreters>=0.3.0,<0.4.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/aisk/multicorn"
+Repository = "https://github.com/aisk/multicorn"
+Issues = "https://github.com/aisk/multicorn/issues"
 
 [dependency-groups]
 dev = [
