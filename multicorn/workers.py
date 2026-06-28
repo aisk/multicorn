@@ -6,19 +6,6 @@ from http import HTTPStatus
 from wsgiref import simple_server
 
 
-class EchoWorker:
-    def run(self, bind, fd, family):
-        sock = socket.fromfd(fd, family, socket.SOCK_STREAM)
-        while True:
-            client, address = sock.accept()
-            with client:
-                while True:
-                    data = client.recv(1024)
-                    if not data:
-                        break
-                    client.sendall(data)
-
-
 class WSGIWorker:
     def __init__(self, app):
         module_name, sep, attr_name = app.partition(":")

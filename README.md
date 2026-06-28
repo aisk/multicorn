@@ -75,7 +75,6 @@ apps that don't implement lifespan keep working unchanged.
 
 ## Current status
 
-- [x] Support run TCP server in multi-interpreters.
 - [x] Support run WSGI server in multi-interpreters.
 - [x] Support run ASGI server in multi-interpreters.
 - [ ] Manage the life cycle of sub-interpreters.
