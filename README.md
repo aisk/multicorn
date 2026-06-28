@@ -41,11 +41,43 @@ server.run(("localhost", 3000))
 
 Now `curl http://localhost:3000/` is served by one of the four sub-interpreters.
 
+Async (ASGI) applications are supported as well:
+
+```python
+# myasgi.py
+async def app(scope, receive, send):
+    assert scope["type"] == "http"
+    await send({
+        "type": "http.response.start",
+        "status": 200,
+        "headers": [(b"content-type", b"text/plain")],
+    })
+    await send({
+        "type": "http.response.body",
+        "body": b"Hello from multicorn!\n",
+    })
+```
+
+```python
+import multicorn
+
+server = multicorn.Server(
+    "multicorn.workers:ASGIWorker",
+    ["myasgi:app"],
+    workers_count=4,
+)
+server.run(("localhost", 3000))
+```
+
+The ASGI worker speaks HTTP/1.1 and supports the optional
+[lifespan](https://asgi.readthedocs.io/en/latest/specs/lifespan.html) protocol;
+apps that don't implement lifespan keep working unchanged.
+
 ## Current status
 
 - [x] Support run TCP server in multi-interpreters.
 - [x] Support run WSGI server in multi-interpreters.
-- [ ] Support run ASGI server in multi-interpreters.
+- [x] Support run ASGI server in multi-interpreters.
 - [ ] Manage the life cycle of sub-interpreters.
 
 ## Limitations
