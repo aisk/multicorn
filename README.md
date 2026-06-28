@@ -14,6 +14,33 @@ This caused huge memory costs and made stateful server programming harder becaus
 
 Multicorn is an experimental project for writing server-side network applications in multi-interpreters. It's more like a multi-interpreter version of [gunicorn](https://gunicorn.org/), instead of using multi-process.
 
+## Usage
+
+Write a WSGI application as usual:
+
+```python
+# myapp.py
+def app(environ, start_response):
+    start_response("200 OK", [("Content-Type", "text/plain")])
+    return [b"Hello from multicorn!\n"]
+```
+
+Then serve it with multiple interpreters, each running in its own thread and
+sharing the listening socket:
+
+```python
+import multicorn
+
+server = multicorn.Server(
+    "multicorn.workers:WSGIWorker",
+    ["myapp:app"],
+    workers_count=4,
+)
+server.run(("localhost", 3000))
+```
+
+Now `curl http://localhost:3000/` is served by one of the four sub-interpreters.
+
 ## Current status
 
 - [x] Support run TCP server in multi-interpreters.
