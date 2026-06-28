@@ -4,8 +4,8 @@ from wsgiref import simple_server
 
 
 class EchoWorker:
-    def run(self, bind, fd):
-        sock = socket.fromfd(fd, socket.AF_INET, socket.SOCK_STREAM)
+    def run(self, bind, fd, family):
+        sock = socket.fromfd(fd, family, socket.SOCK_STREAM)
         while True:
             client, address = sock.accept()
             with client:
@@ -16,25 +16,26 @@ class EchoWorker:
                     client.sendall(data)
 
 
-class WSGIServer(simple_server.WSGIServer):
-    def server_bind(self):
-        host, port = self.server_address[:2]
-        self.server_name = socket.getfqdn(host)
-        self.server_port = port
-        self.setup_environ()
-
-
 class WSGIWorker:
     def __init__(self, app):
-        splited = app.split(":")
-        module_name = splited[0]
-        class_name = splited[1]
+        module_name, sep, attr_name = app.partition(":")
+        if not sep or not module_name or not attr_name:
+            raise ValueError(f"app must be 'module' and 'attr' joined by a colon, got {app!r}")
 
         module = importlib.import_module(module_name)
-        self.app = getattr(module, class_name)
+        self.app = getattr(module, attr_name)
 
-    def run(self, bind, fd):
-        server = WSGIServer(bind, simple_server.WSGIRequestHandler)
-        server.socket = socket.fromfd(fd, socket.AF_INET, socket.SOCK_STREAM)
+    def run(self, bind, fd, family):
+        # Don't let WSGIServer create, bind and listen on its own socket; reuse
+        # the listening fd shared from the parent interpreter instead.
+        server = simple_server.WSGIServer(
+            bind, simple_server.WSGIRequestHandler, bind_and_activate=False
+        )
+        server.socket.close()
+        server.socket = socket.fromfd(fd, family, socket.SOCK_STREAM)
+        host, port = bind[0], bind[1]
+        server.server_name = socket.getfqdn(host)
+        server.server_port = port
+        server.setup_environ()
         server.set_app(self.app)
         server.serve_forever()
