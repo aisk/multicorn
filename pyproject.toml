@@ -36,7 +36,7 @@ Issues = "https://github.com/aisk/multicorn/issues"
 dev = [
     "black>=24.8,<25.0",
     "flake8>=5.0.4,<6.0.0",
-    "mypy>=1.14,<2.0",
+    "mypy>=1.14,<3.0",
 ]
 
 [build-system]
