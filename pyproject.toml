@@ -34,7 +34,7 @@ Issues = "https://github.com/aisk/multicorn/issues"
 
 [dependency-groups]
 dev = [
-    "black>=24.8,<25.0",
+    "black>=24.8,<27.0",
     "flake8>=5.0.4,<6.0.0",
     "mypy>=1.14,<2.0",
 ]
